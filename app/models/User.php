@@ -38,7 +38,7 @@
             return $this->situation;
         }
 
-        public function setId($id)
+        public function setId(int $id)
         {
             $this->id = $id;
         }
@@ -58,12 +58,12 @@
             $this->password = $password;
         }
 
-        public function setLevel($level)
+        public function setLevel(int $level)
         {
             $this->level = $level;
         }
 
-        public function setSituation($situation)
+        public function setSituation(int $situation)
         {
             $this->situation = $situation;
         }
