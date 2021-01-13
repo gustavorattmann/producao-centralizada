@@ -11,8 +11,8 @@ CREATE TABLE IF NOT EXISTS users
     name VARCHAR(100) NOT NULL,
     email VARCHAR(100) NOT NULL,
     password VARCHAR(255) NOT NULL,
-    level TINYINT NOT NULL, /* 0 - admin, 1 - manager, 2 - employee */
-    situation BIT DEFAULT 1 NOT NULL, /* 0 - inactive, 1 - active */
+    level TINYINT DEFAULT 2 NOT NULL, /* 0 - admin, 1 - manager, 2 - employee */
+    situation TINYINT DEFAULT 1 NOT NULL, /* 0 - inactive, 1 - active */
     
     CONSTRAINT pk_users PRIMARY KEY (id),
     CONSTRAINT un_email UNIQUE (email),
