@@ -6,8 +6,6 @@
     use Phalcon\Http\Request;
     use Phalcon\Http\Response;
     use Phalcon\Security;
-    use Phalcon\Session\Manager;
-    use Phalcon\Session\Adapter\Stream;
     use Lcobucci\JWT\Configuration;
     use Lcobucci\JWT\Signer\Hmac\Sha512;
     use Lcobucci\JWT\Signer\Key\InMemory;
@@ -17,32 +15,72 @@
     {
         public function index()
         {
-            $session = new Manager();
-            $files = new Stream(
-                [
-                    'savePath' => '/tmp',
-                ]
-            );
-            
-            $session
-                ->setAdapter($files)
-                ->start();
+            $user = new User();
 
-            if ( $session->get('user') ) {
-                if ( $this->redis->exists($session->get('user')) ) {
-                    $bearerToken = $this->redis->get($session->get('user'));
+            $response = new Response();
+            
+            session_start();
+            
+            if ( $_SESSION['user'] ) {
+                if ( $this->redis->exists($_SESSION['user']) ) {
+                    $bearerToken = $this->redis->get($_SESSION['user']);
     
                     $jwtConfig = Configuration::forUnsecuredSigner();
                     $tokenId = $jwtConfig->parser()->parse($bearerToken)->claims()->get('jti');
+
+                    var_dump($tokenId);
+                    exit();
     
                     if ( $tokenId == '4f1g23a12aa' ) {
-                        echo "funcionou";
+                        $sql = '
+                            SELECT
+                                *
+                            FROM
+                                users
+                            WHERE
+                                email = :email
+                        ';
+
+                        $query = $this->db->query(
+                            $sql,
+                            [
+                                'email' => $_SESSION['user']
+                            ]
+                        );
+
+                        $result = $query->fetch();
+
+                        $contents = [
+                            'user' => [
+                                'id'        => $result['id'],
+                                'name'      => $result['name'],
+                                'email'     => $result['email'],
+                                'level'     => $result['level'],
+                                'situation' => $result['situation']
+                            ]
+                        ];
+
+                        $response
+                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 200)
+                            ->send();
                     } else {
-                        echo "não";
+                        $contents = [
+                            'msg' => 'Token inválido!'
+                        ];
+        
+                        $response
+                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
+                            ->send();
                     }
                 }
             } else {
-                echo "redireciona para o login";
+                $contents = [
+                    'msg' => 'Seu usuário não está logado!'
+                ];
+
+                $response
+                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
+                    ->send();
             }
             
             //$user = new User();
@@ -124,14 +162,20 @@
                         );
     
                         if ( $success ) {
+                            $contents = [
+                                'msg' => 'Cadastro realizado com sucesso!'
+                            ];
+            
                             $response
-                                ->setStatusCode(201)
-                                ->setContent('Cadastro realizado com sucesso!')
+                                ->setJsonContent($contents, JSON_PRETTY_PRINT, 201)
                                 ->send();
                         } else {
+                            $contents = [
+                                'msg' => 'Falha no cadastro!'
+                            ];
+            
                             $response
-                                ->setStatusCode(400)
-                                ->setContent('Falha no cadastro!')
+                                ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
                                 ->send();
                         }
                     }
@@ -140,9 +184,12 @@
                 } catch (Exception $error) {
                     $this->db->rollback();
 
+                    $contents = [
+                        'msg' => 'Ocorreu um erro em nosso servidor, tente mais tarde!'
+                    ];
+    
                     $response
-                        ->setStatusCode(500)
-                        ->setContent('Ocorreu um erro em nosso servidor, tente mais tarde!')
+                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 500)
                         ->send();
                 }
             //}           
@@ -159,28 +206,25 @@
 
             $security = new Security();
 
-            $session = new Manager();
-            $files = new Stream(
-                [
-                    'savePath' => '/tmp',
-                ]
-            );
+            session_start();
 
-            $session
-                ->setAdapter($files)
-                ->start();
-
-            if ( $session->exists('user') ) {
-                if ( $this->redis->exists($session->get('user')) ) {
-                    $bearerToken = $this->redis->get($session->get('user'));
+            if ( $_SESSION['user'] ) {
+                if ( $this->redis->exists($_SESSION['user']) ) {
+                    $bearerToken = $this->redis->get($_SESSION['user']);
     
                     $jwtConfig = Configuration::forUnsecuredSigner();
                     $tokenId = $jwtConfig->parser()->parse($bearerToken)->claims()->get('jti');
-    
+
                     if ( $tokenId == '4f1g23a12aa' ) {
-                        echo "redireciona para página inicial";
+                        $response->redirect('api/users');
                     } else {
-                        echo "não";
+                        $contents = [
+                            'msg' => 'Token inválido!'
+                        ];
+        
+                        $response
+                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
+                            ->send();
                     }
                 }
             } else {
@@ -259,22 +303,28 @@
                                 if ( $this->redis->exists($request->get('email')) ) {
                                     $this->redis->del($request->get('email'));
                                 }
-    
-                                if ( $session->has($request->get('email')) ) {
-                                    $session->remove($request->get('email'));
+
+                                if ( empty($_SESSION['user']) ) {
+                                    unset($_SESSION['user']);
                                 }
     
                                 if ( $this->redis->set($request->get('email'), $token->toString()) ) {
-                                    $session->set('user', $request->get('email'));
-    
+                                    $_SESSION['user'] = $request->get('email');
+
+                                    $contents = [
+                                        'token' => $token->toString()
+                                    ];
+                    
                                     $response
-                                        ->setStatusCode(200)
-                                        ->setContent($token->toString())
+                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 200)
                                         ->send();
                                 } else {
+                                    $contents = [
+                                        'msg' => 'Não foi possível registrar token!'
+                                    ];
+                    
                                     $response
-                                        ->setStatusCode(400)
-                                        ->setContent('Não foi possível registrar token!')
+                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 500)
                                         ->send();
                                 }
     
@@ -283,27 +333,39 @@
                                     ->setContent('Logado!')
                                     ->send();*/
                             } else {
+                                $contents = [
+                                    'msg' => 'Usuário desativado, favor contatar departamento de RH!'
+                                ];
+                
                                 $response
-                                    ->setStatusCode(401)
-                                    ->setContent('Usuário desativado, favor contatar departamento de RH!')
+                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
                                     ->send();
                             }
                         } else {
+                            $contents = [
+                                'msg' => 'E-mail e/ou senha incorreto(s)!'
+                            ];
+            
                             $response
-                                ->setStatusCode(400)
-                                ->setContent('E-mail e/ou senha incorreto(s)!')
+                                ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
                                 ->send();
                         }
                     } else {
+                        $contents = [
+                            'msg' => 'Usuário não encontrado no sistema!'
+                        ];
+        
                         $response
-                            ->setStatusCode(401)
-                            ->setContent('Usuário não encontrado no sistema!')
+                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
                             ->send();
                     }
                 } else {
+                    $contents = [
+                        'msg' => 'Dados não preenchidos!'
+                    ];
+    
                     $response
-                        ->setStatusCode(401)
-                        ->setContent('Dados não preenchidos!')
+                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
                         ->send();
                 }
             }
@@ -311,7 +373,50 @@
 
         public function logout()
         {
+            $response = new Response();
 
+            session_start();
+
+            if ( $_SESSION['user'] ) {
+                if ( $this->redis->exists($_SESSION['user']) ) {
+                    $bearerToken = $this->redis->get($_SESSION['user']);
+    
+                    $jwtConfig = Configuration::forUnsecuredSigner();
+                    $tokenId = $jwtConfig->parser()->parse($bearerToken)->claims()->get('jti');
+
+                    if ( $tokenId == '4f1g23a12aa' ) {
+                        if ( $this->redis->del($_SESSION['user']) ) {
+                            session_destroy();
+
+                            $response->redirect('api/users/login');
+                        } else {
+                            $contents = [
+                                'msg' => 'Não foi possível deslogar da sessão!'
+                            ];
+            
+                            $response
+                                ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                ->send();
+                        }                        
+                    } else {
+                        $contents = [
+                            'msg' => 'Token inválido!'
+                        ];
+        
+                        $response
+                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
+                            ->send();
+                    }
+                }
+            } else {
+                $contents = [
+                    'msg' => 'Seu usuário não está logado!'
+                ];
+
+                $response
+                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
+                    ->send();
+            }
         }
     }
 
