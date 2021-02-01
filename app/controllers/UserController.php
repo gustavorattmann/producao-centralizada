@@ -6,9 +6,7 @@
     use Phalcon\Http\Request;
     use Phalcon\Http\Response;
     use Phalcon\Security;
-    use Lcobucci\JWT\Configuration;
-    use Lcobucci\JWT\Signer\Hmac\Sha512;
-    use Lcobucci\JWT\Signer\Key\InMemory;
+    use Firebase\JWT\JWT;
     use App\Models\User;
 
     class UserController extends Controller
@@ -17,83 +15,67 @@
         {
             $user = new User();
 
+            $request = new Request();
+
             $response = new Response();
             
             session_start();
-            
-            if ( $_SESSION['user'] ) {
-                if ( $this->redis->exists($_SESSION['user']) ) {
-                    $bearerToken = $this->redis->get($_SESSION['user']);
-    
-                    $jwtConfig = Configuration::forUnsecuredSigner();
-                    $tokenId = $jwtConfig->parser()->parse($bearerToken)->claims()->get('jti');
 
-                    var_dump($tokenId);
-                    exit();
-    
-                    if ( $tokenId == '4f1g23a12aa' ) {
-                        $sql = '
-                            SELECT
-                                *
-                            FROM
-                                users
-                            WHERE
-                                email = :email
-                        ';
+            $bearerToken = $request->getHeaders()['Authorization'];
 
-                        $query = $this->db->query(
-                            $sql,
-                            [
-                                'email' => $_SESSION['user']
-                            ]
-                        );
+            $bearerToken = str_replace('Bearer ', '', $bearerToken);
 
-                        $result = $query->fetch();
+            if ( !empty($_SESSION['user']) && !empty($bearerToken) ) {
+                $key = base64_encode($_ENV['SECRET_KEY'] . $_SESSION['user']);
 
-                        $contents = [
-                            'user' => [
-                                'id'        => $result['id'],
-                                'name'      => $result['name'],
-                                'email'     => $result['email'],
-                                'level'     => $result['level'],
-                                'situation' => $result['situation']
-                            ]
-                        ];
+                JWT::$leeway = 60;
+                $token = JWT::decode($bearerToken, $key, array('HS512'));
+            }
 
-                        $response
-                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 200)
-                            ->send();
-                    } else {
-                        $contents = [
-                            'msg' => 'Token inválido!'
-                        ];
-        
-                        $response
-                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
-                            ->send();
-                    }
-                }
+            $token_array = (array) $token;
+            $nbf_array = (array) $token_array['nbf'];
+
+            if ( date(\DateTime::ISO8601) <= $nbf_array && $token_array['situation'] == 1 ) {
+                $sql = '
+                    SELECT
+                        *
+                    FROM
+                        users
+                    WHERE
+                        email = :email
+                ';
+
+                $query = $this->db->query(
+                    $sql,
+                    [
+                        'email' => $_SESSION['user']
+                    ]
+                );
+
+                $result = $query->fetch();
+
+                $contents = [
+                    'user' => [
+                        'id'        => $result['id'],
+                        'name'      => $result['name'],
+                        'email'     => $result['email'],
+                        'level'     => $result['level'],
+                        'situation' => $result['situation']
+                    ]
+                ];
+
+                $response
+                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 200)
+                    ->send();
             } else {
                 $contents = [
-                    'msg' => 'Seu usuário não está logado!'
+                    'msg' => 'Token inválido!'
                 ];
 
                 $response
                     ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
                     ->send();
             }
-            
-            //$user = new User();
-
-            //$user->setName('Gustavo');
-
-            //echo $user->getName();
-
-            //$this->redis->set('nome', 'Gustavo');
-
-            echo $this->redis->get('nome');
-
-            //$redis->get('nome');
         }
 
         public function register()
@@ -106,94 +88,125 @@
 
             $security = new Security();
 
-            /*if ( empty($request->get('name')) && empty($request->get('email')) && empty($request->get('password'))
-                 && empty($request->get('level')) && empty($request->get('situation')) ) {
-                echo "Vazio";
-            } else {*/
-                $sql_verify_email = '
-                    SELECT
-                        email
-                    FROM
-                        users
-                    WHERE
-                        email = :email
-                ';
+            session_start();
 
-                try {
-                    $this->db->begin();
+            $bearerToken = $request->getHeaders()['Authorization'];
 
-                    $email_verified = $this->db->query(
-                        $sql_verify_email,
-                        [
-                            'email' => $request->get('email')
-                        ]
-                    );
+            $bearerToken = str_replace('Bearer ', '', $bearerToken);
 
-                    if ( $email_verified->numRows() > 0 ) {
-                        $response
-                            ->setStatusCode(400)
-                            ->setContent('Usuário já está cadastrado!')
-                            ->send();
-                    } else {
-                        $password_hashed = $security->hash($request->get('password'));
+            if ( !empty($_SESSION['user']) && !empty($bearerToken) ) {
+                $key = base64_encode($_ENV['SECRET_KEY'] . $_SESSION['user']);
 
-                        $user->setName($request->get('name'));
-                        $user->setEmail($request->get('email'));
-                        $user->setPassword($password_hashed);
-                        $user->setLevel(2);
-                        $user->setSituation(1);
+                JWT::$leeway = 60;
+                $token = JWT::decode($bearerToken, $key, array('HS512'));
+            }
 
-                        $sql = '
-                            INSERT INTO users
-                                (name, email, password, level, situation)
-                            VALUES
-                                (:name, :email, :password, :level, :situation);
-                        ';
+            $token_array = (array) $token;
+            $nbf_array = (array) $token_array['nbf'];
 
-                        $success = $this->db->query(
-                            $sql,
-                            [
-                                'name'      => $user->getName(),
-                                'email'     => $user->getEmail(),
-                                'password'  => $user->getPassword(),
-                                'level'     => $user->getLevel(),
-                                'situation' => $user->getSituation(),
-                            ]
-                        );
-    
-                        if ( $success ) {
-                            $contents = [
-                                'msg' => 'Cadastro realizado com sucesso!'
-                            ];
-            
-                            $response
-                                ->setJsonContent($contents, JSON_PRETTY_PRINT, 201)
-                                ->send();
-                        } else {
-                            $contents = [
-                                'msg' => 'Falha no cadastro!'
-                            ];
-            
-                            $response
-                                ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
-                                ->send();
-                        }
-                    }
+            if ( date(\DateTime::ISO8601) <= $nbf_array && $token_array['situation'] == 1 ) {
+                $contents = [
+                    'msg' => 'Seu usuário já está autenticado!'
+                ];
 
-                    $this->db->commit();
-                } catch (Exception $error) {
-                    $this->db->rollback();
-
+                $response
+                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 200)
+                    ->send();
+            } else {
+                if ( empty($request->get('name')) && empty($request->get('email')) && empty($request->get('password'))
+                  && empty($request->get('level')) && empty($request->get('situation')) ) {
                     $contents = [
-                        'msg' => 'Ocorreu um erro em nosso servidor, tente mais tarde!'
+                        'msg' => 'Dados insuficiente!'
                     ];
     
                     $response
-                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 500)
+                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
                         ->send();
-                }
-            //}           
+                } else {
+                    $sql_verify_email = '
+                        SELECT
+                            email
+                        FROM
+                            users
+                        WHERE
+                            email = :email
+                    ';
 
+                    try {
+                        $this->db->begin();
+
+                        $email_verified = $this->db->query(
+                            $sql_verify_email,
+                            [
+                                'email' => $request->get('email')
+                            ]
+                        );
+
+                        if ( $email_verified->numRows() > 0 ) {
+                            $response
+                                ->setStatusCode(400)
+                                ->setContent('Usuário já está cadastrado!')
+                                ->send();
+                        } else {
+                            $password_hashed = $security->hash($request->get('password'));
+
+                            $user->setName($request->get('name'));
+                            $user->setEmail($request->get('email'));
+                            $user->setPassword($password_hashed);
+                            $user->setLevel(2);
+                            $user->setSituation(1);
+
+                            $sql = '
+                                INSERT INTO users
+                                    (name, email, password, level, situation)
+                                VALUES
+                                    (:name, :email, :password, :level, :situation);
+                            ';
+
+                            $success = $this->db->query(
+                                $sql,
+                                [
+                                    'name'      => $user->getName(),
+                                    'email'     => $user->getEmail(),
+                                    'password'  => $user->getPassword(),
+                                    'level'     => $user->getLevel(),
+                                    'situation' => $user->getSituation(),
+                                ]
+                            );
+        
+                            if ( $success ) {
+                                $contents = [
+                                    'msg' => 'Cadastro realizado com sucesso!'
+                                ];
+                
+                                $response
+                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 201)
+                                    ->send();
+                            } else {
+                                $contents = [
+                                    'msg' => 'Falha no cadastro!'
+                                ];
+                
+                                $response
+                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                    ->send();
+                            }
+                        }
+
+                        $this->db->commit();
+                    } catch (Exception $error) {
+                        $this->db->rollback();
+
+                        $contents = [
+                            'msg' => 'Ocorreu um erro em nosso servidor, tente mais tarde!'
+                        ];
+        
+                        $response
+                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 500)
+                            ->send();
+                    }
+                }
+            }
         }
 
         public function login()
@@ -208,25 +221,28 @@
 
             session_start();
 
-            if ( $_SESSION['user'] ) {
-                if ( $this->redis->exists($_SESSION['user']) ) {
-                    $bearerToken = $this->redis->get($_SESSION['user']);
-    
-                    $jwtConfig = Configuration::forUnsecuredSigner();
-                    $tokenId = $jwtConfig->parser()->parse($bearerToken)->claims()->get('jti');
+            $bearerToken = $request->getHeaders()['Authorization'];
 
-                    if ( $tokenId == '4f1g23a12aa' ) {
-                        $response->redirect('api/users');
-                    } else {
-                        $contents = [
-                            'msg' => 'Token inválido!'
-                        ];
-        
-                        $response
-                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
-                            ->send();
-                    }
-                }
+            $bearerToken = str_replace('Bearer ', '', $bearerToken);
+
+            if ( !empty($_SESSION['user']) && !empty($bearerToken) ) {
+                $key = base64_encode($_ENV['SECRET_KEY'] . $_SESSION['user']);
+
+                JWT::$leeway = 60;
+                $token = JWT::decode($bearerToken, $key, array('HS512'));
+            }
+
+            $token_array = (array) $token;
+            $nbf_array = (array) $token_array['nbf'];
+
+            if ( date(\DateTime::ISO8601) <= $nbf_array && $token_array['situation'] == 1 ) {
+                $contents = [
+                    'msg' => 'Seu usuário já está autenticado!'
+                ];
+
+                $response
+                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 200)
+                    ->send();
             } else {
                 if ( !empty($request->get('email')) && !empty($request->get('password')) ) {
                     $sql_verify_email = '
@@ -267,7 +283,7 @@
                         if ( $security->checkHash($request->get('password'), $result['password']) ) {
                             $sql_verify_situation = '
                                 SELECT
-                                    situation
+                                    id, level, situation
                                 FROM
                                     users
                             ';
@@ -277,61 +293,57 @@
                             $result = $verify_situation->fetch();
     
                             if ( $result['situation'] == 1 ) {
-                                $encrypt = base64_encode($_ENV['SECRET_KEY'] . $request->get('email'));
-    
-                                $config = Configuration::forSymmetricSigner(
-                                    new Sha512(),
-                                    InMemory::base64Encoded($encrypt)
+                                $key = base64_encode($_ENV['SECRET_KEY'] . $request->get('email'));
+
+                                $payload = array(
+                                    "iss"       => $_SERVER['HOST_NAME'],
+                                    "aud"       => $_ENV['APP_URL'],
+                                    "iat"       => date(\DateTime::ISO8601),
+                                    "nbf"       => date(\DateTime::ISO8601, strtotime('+3 minute')),
+                                    'id'        => $result['id'],
+                                    'level'     => $result['level'],
+                                    'situation' => $result['situation']
                                 );
                                 
-                                
-                                $now = new \DateTimeImmutable();
-                                $token = $config->builder()
-                                                ->issuedBy($_ENV['APP_URL'])
-                                                ->permittedFor('http://localhost:9000')
-                                                ->identifiedBy('4f1g23a12aa')
-                                                ->issuedAt($now)
-                                                ->canOnlyBeUsedAfter($now->modify('+1 minute'))
-                                                ->expiresAt($now->modify('+1 hour'))
-                                                ->withClaim('uid', 1)
-                                                ->withHeader('foo', 'bar')
-                                                ->getToken($config->signer(), $config->signingKey());
+                                try {
+                                    $token = JWT::encode($payload, $key, 'HS512');
     
-                                $token->headers(); // Retrieves the token headers
-                                $token->claims(); // Retrieves the token claims
-    
-                                if ( $this->redis->exists($request->get('email')) ) {
-                                    $this->redis->del($request->get('email'));
-                                }
+                                    if ( $this->redis->exists($request->get('email')) ) {
+                                        $this->redis->del($request->get('email'));
+                                    }
 
-                                if ( empty($_SESSION['user']) ) {
-                                    unset($_SESSION['user']);
-                                }
-    
-                                if ( $this->redis->set($request->get('email'), $token->toString()) ) {
-                                    $_SESSION['user'] = $request->get('email');
+                                    if ( empty($_SESSION['user']) ) {
+                                        unset($_SESSION['user']);
+                                    }
+        
+                                    if ( $this->redis->set($request->get('email'), $token) ) {
+                                        $_SESSION['user'] = $request->get('email');
 
+                                        $contents = [
+                                            'token' => $token
+                                        ];
+                        
+                                        $response
+                                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 200)
+                                            ->send();
+                                    } else {
+                                        $contents = [
+                                            'msg' => 'Não foi possível registrar token!'
+                                        ];
+                        
+                                        $response
+                                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 500)
+                                            ->send();
+                                    }
+                                } catch (UnexpectedValueException $error) {
                                     $contents = [
-                                        'token' => $token->toString()
+                                        'msg' => $error->getMessage()
                                     ];
                     
                                     $response
-                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 200)
-                                        ->send();
-                                } else {
-                                    $contents = [
-                                        'msg' => 'Não foi possível registrar token!'
-                                    ];
-                    
-                                    $response
-                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 500)
+                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
                                         ->send();
                                 }
-    
-                                /*$response
-                                    ->setStatusCode(200)
-                                    ->setContent('Logado!')
-                                    ->send();*/
                             } else {
                                 $contents = [
                                     'msg' => 'Usuário desativado, favor contatar departamento de RH!'
@@ -373,44 +385,51 @@
 
         public function logout()
         {
+            $request = new Request();
+            
             $response = new Response();
 
             session_start();
 
-            if ( $_SESSION['user'] ) {
+            $bearerToken = $request->getHeaders()['Authorization'];
+
+            $bearerToken = str_replace('Bearer ', '', $bearerToken);
+
+            if ( !empty($_SESSION['user']) && !empty($bearerToken) ) {
+                $key = base64_encode($_ENV['SECRET_KEY'] . $_SESSION['user']);
+
+                JWT::$leeway = 60;
+                $token = JWT::decode($bearerToken, $key, array('HS512'));
+            }
+
+            $token_array = (array) $token;
+            $nbf_array = (array) $token_array['nbf'];
+
+            if ( date(\DateTime::ISO8601) <= $nbf_array && $token_array['situation'] == 1 ) {
                 if ( $this->redis->exists($_SESSION['user']) ) {
-                    $bearerToken = $this->redis->get($_SESSION['user']);
-    
-                    $jwtConfig = Configuration::forUnsecuredSigner();
-                    $tokenId = $jwtConfig->parser()->parse($bearerToken)->claims()->get('jti');
+                    if ( $this->redis->del($_SESSION['user']) ) {
+                        session_destroy();
 
-                    if ( $tokenId == '4f1g23a12aa' ) {
-                        if ( $this->redis->del($_SESSION['user']) ) {
-                            session_destroy();
-
-                            $response->redirect('api/users/login');
-                        } else {
-                            $contents = [
-                                'msg' => 'Não foi possível deslogar da sessão!'
-                            ];
-            
-                            $response
-                                ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
-                                ->send();
-                        }                        
-                    } else {
                         $contents = [
-                            'msg' => 'Token inválido!'
+                            'msg' => 'Sessão encerrada com sucesso!'
                         ];
         
                         $response
-                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
+                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 200)
+                            ->send();
+                    } else {
+                        $contents = [
+                            'msg' => 'Não foi possível encerrar sessão!'
+                        ];
+        
+                        $response
+                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
                             ->send();
                     }
                 }
             } else {
                 $contents = [
-                    'msg' => 'Seu usuário não está logado!'
+                    'msg' => 'Token inválido!'
                 ];
 
                 $response
