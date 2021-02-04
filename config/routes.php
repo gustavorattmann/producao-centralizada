@@ -7,8 +7,11 @@
     $users->setHandler(new UserController())
           ->setPrefix('/api/users')
           ->get('/', 'index')
-        //->get('/', 'index')
           ->post('/register', 'register')
+          ->put('/update', 'update')
+          ->put('/update/{id}', 'update')
+          ->delete('/delete', 'delete')
+          ->delete('/delete/{id}', 'delete')
           ->post('/login', 'login')
           ->get('/logout', 'logout');
 
