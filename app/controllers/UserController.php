@@ -36,33 +36,56 @@
             $nbf_array = (array) $token_array['nbf'];
 
             if ( date(\DateTime::ISO8601) <= $nbf_array && $token_array['situation'] == 1 ) {
-                $sql = '
-                    SELECT
-                        *
-                    FROM
-                        users
-                    WHERE
-                        email = :email
-                ';
+                if ( $token_array['level'] == 0 ) {
+                    $sql = '
+                        SELECT
+                            *
+                        FROM
+                            users
+                    ';
 
-                $query = $this->db->query(
-                    $sql,
-                    [
-                        'email' => $_SESSION['user']
-                    ]
-                );
+                    $users = $this->db->fetchAll($sql);
 
-                $result = $query->fetch();
+                    foreach ($users as $key => $user) {
+                        $contents[$key] = [
+                            'user' => [
+                                'id'        => $user['id'],
+                                'name'      => $user['name'],
+                                'email'     => $user['email'],
+                                'level'     => $user['level'],
+                                'situation' => $user['situation']
+                            ]
+                        ];
+                    }
+                } else {
+                    $sql = '
+                        SELECT
+                            *
+                        FROM
+                            users
+                        WHERE
+                            email = :email
+                    ';
 
-                $contents = [
-                    'user' => [
-                        'id'        => $result['id'],
-                        'name'      => $result['name'],
-                        'email'     => $result['email'],
-                        'level'     => $result['level'],
-                        'situation' => $result['situation']
-                    ]
-                ];
+                    $result = $this->db->query(
+                        $sql,
+                        [
+                            'email' => $_SESSION['user']
+                        ]
+                    );
+
+                    $user = $result->fetch();
+
+                    $contents = [
+                        'user' => [
+                            'id'        => $user['id'],
+                            'name'      => $user['name'],
+                            'email'     => $user['email'],
+                            'level'     => $user['level'],
+                            'situation' => $user['situation']
+                        ]
+                    ];
+                }
 
                 $response
                     ->setJsonContent($contents, JSON_PRETTY_PRINT, 200)
@@ -286,9 +309,16 @@
                                     id, level, situation
                                 FROM
                                     users
+                                WHERE
+                                    email = :email
                             ';
     
-                            $verify_situation = $this->db->query($sql_verify_situation);
+                            $verify_situation = $this->db->query(
+                                $sql_verify_situation,
+                                [
+                                    'email' => $request->get('email')
+                                ]
+                            );
     
                             $result = $verify_situation->fetch();
     
