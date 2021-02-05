@@ -10,6 +10,8 @@
           ->post('/register', 'register')
           ->put('/update', 'update')
           ->put('/update/{id}', 'update')
+          ->put('/change-password', 'changePassword')
+          ->put('/change-password/{id}', 'changePassword')
           ->delete('/delete', 'delete')
           ->delete('/delete/{id}', 'delete')
           ->post('/login', 'login')
