@@ -24,7 +24,7 @@
 
                 $bearerToken = str_replace('Bearer ', '', $bearerToken);
 
-                if ( $bearerToken == $this->redis->get($_SESSION['user']) ) {
+                if ( !empty($bearerToken) && $bearerToken == $this->redis->get($_SESSION['user']) ) {
                     $key = base64_encode($_ENV['SECRET_KEY'] . $_SESSION['user']);
 
                     JWT::$leeway = 60;
@@ -143,7 +143,7 @@
 
             $bearerToken = str_replace('Bearer ', '', $bearerToken);
 
-            if ( $bearerToken == $this->redis->get($_SESSION['user']) ) {
+            if ( !empty($bearerToken) && $bearerToken == $this->redis->get($_SESSION['user']) ) {
                 $key = base64_encode($_ENV['SECRET_KEY'] . $_SESSION['user']);
 
                 JWT::$leeway = 60;
@@ -223,7 +223,7 @@
                             $user->setEmail($request->get('email'));
                             $user->setPassword($password_hashed);
 
-                            if ( intval($token_array['level']) == 0 ) {
+                            if ( !empty(intval($token_array['level'])) && intval($token_array['level']) == 0 ) {
                                 $user->setLevel($request->get('level'));
                                 $user->setSituation($request->get('situation'));
                             } else {
@@ -299,7 +299,7 @@
 
                 $bearerToken = str_replace('Bearer ', '', $bearerToken);
 
-                if ( $bearerToken == $this->redis->get($_SESSION['user']) ) {
+                if ( !empty($bearerToken) && $bearerToken == $this->redis->get($_SESSION['user']) ) {
                     $key = base64_encode($_ENV['SECRET_KEY'] . $_SESSION['user']);
 
                     JWT::$leeway = 60;
@@ -332,16 +332,33 @@
             
                             $result = $query->fetch();
             
-                            if ( ( !empty($request->getPut('name')) || !empty($request->getPut('email')) || !empty($request->getPut('level')) || !empty($request->getPut('situation')) ) &&
-                                 ( ($request->getPut('name') != $result['name']) || ($request->getPut('email') != $result['email']) ||
+                            if ( ( ($request->getPut('name') != $result['name']) || ($request->getPut('email') != $result['email']) ||
                                  ($request->getPut('level') != $result['level']) || ($request->getPut('situation') != $result['situation']) ) ) {
                                 if ( $request->getPut('name') != $result['name'] ) {
                                     $user->setName($request->getPut('name'));
                                 } else {
                                     $user->setName($result['name']);
                                 }
+
+                                $sql_verify_email = '
+                                    SELECT
+                                        email
+                                    FROM
+                                        users
+                                    WHERE
+                                        email = :email
+                                ';
+
+                                $query_email = $this->db->query(
+                                    $sql_verify_email,
+                                    [
+                                        'email' => $request->getPut('email')
+                                    ]
+                                );
+
+                                $row = $query_email->numRows();
             
-                                if ( $request->getPut('email') != $result['email'] ) {
+                                if ( $request->getPut('email') != $result['email'] && $row == 0 ) {
                                     $user->setEmail($request->getPut('email'));
                                 } else {
                                     $user->setEmail($result['email']);
@@ -390,19 +407,30 @@
                                     );
             
                                     if ( $update ) {
-                                        if ( (intval($token_array['level']) != $user->getLevel()) || (intval($token_array['situation']) != $user->getSituation()) ) {
+                                        if ( $result['email'] != $user->getEmail() || $result['level'] != $user->getLevel() || $result['situation'] != $user->getSituation() ) {
                                             if ( $this->redis->exists($user->getEmail()) ) {
                                                 $this->redis->del($user->getEmail());
                                             }
                                         }
             
-                                        $contents = [
-                                            'msg' => 'Usuário atualizado com sucesso!'
-                                        ];
-                
-                                        $response
-                                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 200)
-                                            ->send();
+                                        if ( $result['name'] != $user->getName() || $result['email'] != $user->getEmail() ||
+                                             $result['level'] != $user->getLevel() || $result['situation'] != $user->getSituation() ) {
+                                            $contents = [
+                                                'msg' => 'Usuário atualizado com sucesso!'
+                                            ];
+                    
+                                            $response
+                                                ->setJsonContent($contents, JSON_PRETTY_PRINT, 200)
+                                                ->send();
+                                        } else {
+                                            $contents = [
+                                                'msg' => 'Usuário não foi atualizado!'
+                                            ];
+                    
+                                            $response
+                                                ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                                ->send();
+                                        }
                                     } else {
                                         $contents = [
                                             'msg' => 'Não foi possível atualizar usuário!'
@@ -431,7 +459,7 @@
                                 ];
                 
                                 $response
-                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
+                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
                                     ->send();
                             }
                         } else {
@@ -488,7 +516,7 @@
 
                 $bearerToken = str_replace('Bearer ', '', $bearerToken);
 
-                if ( $bearerToken == $this->redis->get($_SESSION['user']) ) {
+                if ( !empty($bearerToken) && $bearerToken == $this->redis->get($_SESSION['user']) ) {
                     $key = base64_encode($_ENV['SECRET_KEY'] . $_SESSION['user']);
 
                     JWT::$leeway = 60;
@@ -502,83 +530,111 @@
                             if ( empty($id) ) {
                                 $id = intval($token_array['id']);
                             }
-            
+
                             if ( !empty($request->getPut('password')) ) {
-                                $password_hash = $security->hash($request->getPut('password'));
-            
-                                $user->setPassword($password_hash);
-            
-                                $sql_verify_email = '
+                                $sql_verify_password = '
                                     SELECT
-                                        email
+                                        password
                                     FROM
                                         users
                                     WHERE
                                         id = :id
                                 ';
-            
-                                $query = $this->db->query(
-                                    $sql_verify_email,
+
+                                $query_password = $this->db->query(
+                                    $sql_verify_password,
                                     [
                                         'id' => $id
                                     ]
                                 );
-            
-                                $result = $query->fetch();
-            
-                                $sql = '
-                                    UPDATE
-                                        users
-                                    SET
-                                        password = :password
-                                    WHERE
-                                        id = :id
-                                ';
-            
-                                try {
-                                    $this->db->begin();
-            
-                                    $change = $this->db->execute(
-                                        $sql,
-                                        [
-                                            'id'       => $id,
-                                            'password' => $user->getPassword()
-                                        ]
-                                    );
-            
-                                    if ( $change ) {
-                                        if ( $this->redis->exists($result['email']) ) {
-                                            $this->redis->del($result['email']);
-                                        }
-            
-                                        $contents = [
-                                            'msg' => 'Senha alterada com sucesso!'
-                                        ];
-                
-                                        $response
-                                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 200)
-                                            ->send();
-                                    } else {
-                                        $contents = [
-                                            'msg' => 'Não foi possível alterar senha!'
-                                        ];
-                
-                                        $response
-                                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
-                                            ->send();
-                                    }
-            
-                                    $this->db->commit();
-                                } catch (Exception $error) {
-                                    $this->db->rollback();
-            
+
+                                $data = $query_password->fetch();
+                                
+                                if ( $security->checkHash($request->getPut('password'), $data['password']) ) {
                                     $contents = [
-                                        'msg' => 'Ocorreu um erro em nosso servidor, tente mais tarde!'
+                                        'msg' => 'Senhas iguais!'
                                     ];
                     
                                     $response
-                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 500)
+                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
                                         ->send();
+                                } else {
+                                    $password_hash = $security->hash($request->getPut('password'));
+
+                                    $user->setPassword($password_hash);
+            
+                                    $sql_verify_email = '
+                                        SELECT
+                                            email
+                                        FROM
+                                            users
+                                        WHERE
+                                            id = :id
+                                    ';
+                
+                                    $query = $this->db->query(
+                                        $sql_verify_email,
+                                        [
+                                            'id' => $id
+                                        ]
+                                    );
+                
+                                    $result = $query->fetch();
+                
+                                    $sql = '
+                                        UPDATE
+                                            users
+                                        SET
+                                            password = :password
+                                        WHERE
+                                            id = :id
+                                    ';
+                
+                                    try {
+                                        $this->db->begin();
+                
+                                        $change = $this->db->execute(
+                                            $sql,
+                                            [
+                                                'id'       => $id,
+                                                'password' => $user->getPassword()
+                                            ]
+                                        );
+                
+                                        if ( $change ) {
+                                            if ( $this->redis->exists($result['email']) ) {
+                                                $this->redis->del($result['email']);
+                                            }
+                
+                                            $contents = [
+                                                'msg' => 'Senha alterada com sucesso!'
+                                            ];
+                    
+                                            $response
+                                                ->setJsonContent($contents, JSON_PRETTY_PRINT, 200)
+                                                ->send();
+                                        } else {
+                                            $contents = [
+                                                'msg' => 'Não foi possível alterar senha!'
+                                            ];
+                    
+                                            $response
+                                                ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                                ->send();
+                                        }
+                
+                                        $this->db->commit();
+                                    } catch (Exception $error) {
+                                        $this->db->rollback();
+                
+                                        $contents = [
+                                            'msg' => 'Ocorreu um erro em nosso servidor, tente mais tarde!'
+                                        ];
+                        
+                                        $response
+                                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 500)
+                                            ->send();
+                                    }
                                 }
                             } else {
                                 $contents = [
@@ -640,7 +696,7 @@
 
                 $bearerToken = str_replace('Bearer ', '', $bearerToken);
 
-                if ( $bearerToken == $this->redis->get($_SESSION['user']) ) {
+                if ( !empty($bearerToken) && $bearerToken == $this->redis->get($_SESSION['user']) ) {
                     $key = base64_encode($_ENV['SECRET_KEY'] . $_SESSION['user']);
 
                     JWT::$leeway = 60;
@@ -779,7 +835,7 @@
 
                 $bearerToken = str_replace('Bearer ', '', $bearerToken);
 
-                if ( $bearerToken == $this->redis->get($_SESSION['user']) ) {
+                if ( !empty($bearerToken) && $bearerToken == $this->redis->get($_SESSION['user']) ) {
                     $key = base64_encode($_ENV['SECRET_KEY'] . $_SESSION['user']);
 
                     JWT::$leeway = 60;
@@ -865,7 +921,8 @@
 
                         $user->setPassword($result['password']);
     
-                        if ( $security->checkHash($request->get('password'), $user->getPassword()) ) {
+                        if ( (!empty($request->get('password')) && !empty($user->getPassword())) &&
+                              $security->checkHash($request->get('password'), $user->getPassword()) ) {
                             $sql_verify_situation = '
                                 SELECT
                                     id, level, situation
@@ -992,7 +1049,7 @@
 
                 $bearerToken = str_replace('Bearer ', '', $bearerToken);
 
-                if ( $bearerToken == $this->redis->get($_SESSION['user']) ) {
+                if ( !empty($bearerToken) && $bearerToken == $this->redis->get($_SESSION['user']) ) {
                     $key = base64_encode($_ENV['SECRET_KEY'] . $_SESSION['user']);
 
                     JWT::$leeway = 60;
