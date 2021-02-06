@@ -559,80 +559,90 @@
                                         ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
                                         ->send();
                                 } else {
-                                    $password_hash = $security->hash($request->getPut('password'));
+                                    if ( intval($token_array['id']) == $id || intval($token_array['level']) == 0 ) {
+                                        $password_hash = $security->hash($request->getPut('password'));
 
-                                    $user->setPassword($password_hash);
-            
-                                    $sql_verify_email = '
-                                        SELECT
-                                            email
-                                        FROM
-                                            users
-                                        WHERE
-                                            id = :id
-                                    ';
+                                        $user->setPassword($password_hash);
                 
-                                    $query = $this->db->query(
-                                        $sql_verify_email,
-                                        [
-                                            'id' => $id
-                                        ]
-                                    );
-                
-                                    $result = $query->fetch();
-                
-                                    $sql = '
-                                        UPDATE
-                                            users
-                                        SET
-                                            password = :password
-                                        WHERE
-                                            id = :id
-                                    ';
-                
-                                    try {
-                                        $this->db->begin();
-                
-                                        $change = $this->db->execute(
-                                            $sql,
+                                        $sql_verify_email = '
+                                            SELECT
+                                                email
+                                            FROM
+                                                users
+                                            WHERE
+                                                id = :id
+                                        ';
+                    
+                                        $query = $this->db->query(
+                                            $sql_verify_email,
                                             [
-                                                'id'       => $id,
-                                                'password' => $user->getPassword()
+                                                'id' => $id
                                             ]
                                         );
-                
-                                        if ( $change ) {
-                                            if ( $this->redis->exists($result['email']) ) {
-                                                $this->redis->del($result['email']);
+                    
+                                        $result = $query->fetch();
+                    
+                                        $sql = '
+                                            UPDATE
+                                                users
+                                            SET
+                                                password = :password
+                                            WHERE
+                                                id = :id
+                                        ';
+                    
+                                        try {
+                                            $this->db->begin();
+                    
+                                            $change = $this->db->execute(
+                                                $sql,
+                                                [
+                                                    'id'       => $id,
+                                                    'password' => $user->getPassword()
+                                                ]
+                                            );
+                    
+                                            if ( $change ) {
+                                                if ( $this->redis->exists($result['email']) ) {
+                                                    $this->redis->del($result['email']);
+                                                }
+                    
+                                                $contents = [
+                                                    'msg' => 'Senha alterada com sucesso!'
+                                                ];
+                        
+                                                $response
+                                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 200)
+                                                    ->send();
+                                            } else {
+                                                $contents = [
+                                                    'msg' => 'Não foi possível alterar senha!'
+                                                ];
+                        
+                                                $response
+                                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                                    ->send();
                                             }
-                
-                                            $contents = [
-                                                'msg' => 'Senha alterada com sucesso!'
-                                            ];
                     
-                                            $response
-                                                ->setJsonContent($contents, JSON_PRETTY_PRINT, 200)
-                                                ->send();
-                                        } else {
-                                            $contents = [
-                                                'msg' => 'Não foi possível alterar senha!'
-                                            ];
+                                            $this->db->commit();
+                                        } catch (Exception $error) {
+                                            $this->db->rollback();
                     
+                                            $contents = [
+                                                'msg' => 'Ocorreu um erro em nosso servidor, tente mais tarde!'
+                                            ];
+                            
                                             $response
-                                                ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                                ->setJsonContent($contents, JSON_PRETTY_PRINT, 500)
                                                 ->send();
                                         }
-                
-                                        $this->db->commit();
-                                    } catch (Exception $error) {
-                                        $this->db->rollback();
-                
+                                    } else {
                                         $contents = [
-                                            'msg' => 'Ocorreu um erro em nosso servidor, tente mais tarde!'
+                                            'msg' => 'Você não possui autorização para trocar a senha desse usuário!'
                                         ];
                         
                                         $response
-                                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 500)
+                                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
                                             ->send();
                                     }
                                 }
