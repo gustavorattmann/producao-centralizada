@@ -367,10 +367,10 @@
                                     UPDATE
                                         users
                                     SET
-                                        name      =: name,
-                                        email     =: email,
-                                        level     =: level,
-                                        situation =: situation
+                                        name      = :name,
+                                        email     = :email,
+                                        level     = :level,
+                                        situation = :situation
                                     WHERE
                                         id        = :id
                                 ';
