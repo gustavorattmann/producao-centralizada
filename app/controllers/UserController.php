@@ -531,35 +531,35 @@
                                 $id = intval($token_array['id']);
                             }
 
-                            if ( !empty($request->getPut('password')) ) {
-                                $sql_verify_password = '
-                                    SELECT
-                                        password
-                                    FROM
-                                        users
-                                    WHERE
-                                        id = :id
-                                ';
-
-                                $query_password = $this->db->query(
-                                    $sql_verify_password,
-                                    [
-                                        'id' => $id
-                                    ]
-                                );
-
-                                $data = $query_password->fetch();
-                                
-                                if ( $security->checkHash($request->getPut('password'), $data['password']) ) {
-                                    $contents = [
-                                        'msg' => 'Senhas iguais!'
-                                    ];
-                    
-                                    $response
-                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
-                                        ->send();
-                                } else {
-                                    if ( intval($token_array['id']) == $id || intval($token_array['level']) == 0 ) {
+                            if ( intval($token_array['id']) == $id || intval($token_array['level']) == 0 ) {
+                                if ( !empty($request->getPut('password')) ) {
+                                    $sql_verify_password = '
+                                        SELECT
+                                            password
+                                        FROM
+                                            users
+                                        WHERE
+                                            id = :id
+                                    ';
+    
+                                    $query_password = $this->db->query(
+                                        $sql_verify_password,
+                                        [
+                                            'id' => $id
+                                        ]
+                                    );
+    
+                                    $data = $query_password->fetch();
+                                    
+                                    if ( $security->checkHash($request->getPut('password'), $data['password']) ) {
+                                        $contents = [
+                                            'msg' => 'Senhas iguais!'
+                                        ];
+                        
+                                        $response
+                                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                            ->send();
+                                    } else {
                                         $password_hash = $security->hash($request->getPut('password'));
 
                                         $user->setPassword($password_hash);
@@ -636,19 +636,19 @@
                                                 ->setJsonContent($contents, JSON_PRETTY_PRINT, 500)
                                                 ->send();
                                         }
-                                    } else {
-                                        $contents = [
-                                            'msg' => 'Você não possui autorização para trocar a senha desse usuário!'
-                                        ];
-                        
-                                        $response
-                                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
-                                            ->send();
                                     }
+                                } else {
+                                    $contents = [
+                                        'msg' => 'Forneça uma senha!'
+                                    ];
+                    
+                                    $response
+                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                        ->send();
                                 }
                             } else {
                                 $contents = [
-                                    'msg' => 'Forneça uma senha!'
+                                    'msg' => 'Você não possui autorização para trocar a senha desse usuário!'
                                 ];
                 
                                 $response
