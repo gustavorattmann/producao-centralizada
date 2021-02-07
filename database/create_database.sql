@@ -1,8 +1,9 @@
 USE producao_centralizada;
 
 DROP TABLE IF EXISTS product_has_raw_material;
-DROP TABLE IF EXISTS raw_material;
-DROP TABLE IF EXISTS product;
+DROP TABLE IF EXISTS raw_materials;
+DROP TABLE IF EXISTS products;
+DROP TABLE IF EXISTS category;
 DROP TABLE IF EXISTS users;
 
 CREATE TABLE IF NOT EXISTS users
@@ -11,32 +12,41 @@ CREATE TABLE IF NOT EXISTS users
     name VARCHAR(100) NOT NULL,
     email VARCHAR(100) NOT NULL,
     password VARCHAR(255) NOT NULL,
-    level TINYINT DEFAULT 2 NOT NULL, /* 0 - admin, 1 - manager, 2 - employee */
+    level TINYINT DEFAULT 2 NOT NULL, /* 0 - admin, 1 - manager, 2 - human resources, 3 - warehouse, 4 - employee */
     situation TINYINT DEFAULT 1 NOT NULL, /* 0 - inactive, 1 - active */
     
     CONSTRAINT pk_users PRIMARY KEY (id),
-    CONSTRAINT un_email UNIQUE (email),
-    CONSTRAINT un_password UNIQUE (password)
+    CONSTRAINT un_email UNIQUE (email)
 );
 
-CREATE TABLE IF NOT EXISTS product
+CREATE TABLE IF NOT EXISTS category
 (
 	id INTEGER NOT NULL AUTO_INCREMENT,
     name VARCHAR(50) NOT NULL,
-    category TINYINT NOT NULL, /* 0 - epi, 1 - eletronic */
     
-    CONSTRAINT pk_product PRIMARY KEY (id),
-    CONSTRAINT un_product_name UNIQUE (name)
+    CONSTRAINT pk_category PRIMARY KEY (id),
+    CONSTRAINT un_category_name UNIQUE (name)
 );
 
-CREATE TABLE IF NOT EXISTS raw_material
+CREATE TABLE IF NOT EXISTS products
+(
+	id INTEGER NOT NULL AUTO_INCREMENT,
+    name VARCHAR(50) NOT NULL,
+    category INTEGER NOT NULL,
+    
+    CONSTRAINT pk_products PRIMARY KEY (id),
+    CONSTRAINT un_products_name UNIQUE (name),
+    CONSTRAINT fk_category FOREIGN KEY (category) REFERENCES category (id)
+);
+
+CREATE TABLE IF NOT EXISTS raw_materials
 (
 	id INTEGER NOT NULL AUTO_INCREMENT,
     name VARCHAR(50) NOT NULL,
     stock INTEGER NOT NULL,
     
-    CONSTRAINT pk_raw_material PRIMARY KEY (id),
-	CONSTRAINT un_raw_material_name UNIQUE (name)
+    CONSTRAINT pk_raw_materials PRIMARY KEY (id),
+	CONSTRAINT un_raw_materials_name UNIQUE (name)
 );
 
 CREATE TABLE IF NOT EXISTS product_has_raw_material
@@ -54,6 +64,6 @@ CREATE TABLE IF NOT EXISTS product_has_raw_material
     date TIMESTAMP NOT NULL,
     
     CONSTRAINT pk_product_has_raw_material PRIMARY KEY (id),
-    CONSTRAINT fk_product FOREIGN KEY (product) REFERENCES product (id),
-    CONSTRAINT fk_raw_material FOREIGN KEY (raw_material) REFERENCES raw_material (id)
+    CONSTRAINT fk_products FOREIGN KEY (product) REFERENCES products (id),
+    CONSTRAINT fk_raw_materials FOREIGN KEY (raw_material) REFERENCES raw_materials (id)
 );
