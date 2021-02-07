@@ -3,6 +3,7 @@
     use Phalcon\Mvc\Micro\Collection as MicroCollection;
     use App\Controllers\UserController;
     use App\Controllers\ProductController;
+    use App\Controllers\CategoryController;
 
     $users = new MicroCollection();
     $users->setHandler(new UserController())
@@ -29,6 +30,16 @@
              ->delete('/delete/{id}', 'delete');
 
     $app->mount($products);
+
+    $category = new MicroCollection();
+    $category->setHandler(new CategoryController())
+             ->setPrefix('/api/category')
+             ->get('/', 'index')
+             ->post('/register', 'register')
+             ->put('/update/{id}', 'update')
+             ->delete('/delete/{id}', 'delete');
+
+    $app->mount($category);
 
     $app->notFound(
         function () use ($app) {
