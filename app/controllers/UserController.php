@@ -44,17 +44,27 @@
                                 ';
             
                                 $users = $this->db->fetchAll($sql);
-            
-                                foreach ($users as $key => $user) {
-                                    $contents[$key] = [
-                                        'user' => [
-                                            'id'        => $user['id'],
-                                            'name'      => $user['name'],
-                                            'email'     => $user['email'],
-                                            'level'     => $user['level'],
-                                            'situation' => $user['situation']
-                                        ]
+
+                                if ( !empty($users) ) {
+                                    foreach ($users as $key => $user) {
+                                        $contents[$key] = [
+                                            'user' => [
+                                                'id'        => $user['id'],
+                                                'name'      => $user['name'],
+                                                'email'     => $user['email'],
+                                                'level'     => $user['level'],
+                                                'situation' => $user['situation']
+                                            ]
+                                        ];
+                                    }
+                                } else {
+                                    $contents = [
+                                        'msg' => 'Nenhum usuário encontrado!'
                                     ];
+                    
+                                    $response
+                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                        ->send();
                                 }
                             } else {
                                 $sql = '
@@ -74,16 +84,26 @@
                                 );
             
                                 $user = $result->fetch();
-            
-                                $contents = [
-                                    'user' => [
-                                        'id'        => $user['id'],
-                                        'name'      => $user['name'],
-                                        'email'     => $user['email'],
-                                        'level'     => $user['level'],
-                                        'situation' => $user['situation']
-                                    ]
-                                ];
+
+                                if ( !empty($user) ) {
+                                    $contents = [
+                                        'user' => [
+                                            'id'        => $user['id'],
+                                            'name'      => $user['name'],
+                                            'email'     => $user['email'],
+                                            'level'     => $user['level'],
+                                            'situation' => $user['situation']
+                                        ]
+                                    ];
+                                } else {
+                                    $contents = [
+                                        'msg' => 'Seu usuário não foi encontrado!'
+                                    ];
+                    
+                                    $response
+                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                        ->send();
+                                }
                             }
             
                             $response
