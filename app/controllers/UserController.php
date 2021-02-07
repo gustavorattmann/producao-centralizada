@@ -773,58 +773,69 @@
                                         'id' => $user->getId()
                                     ]
                                 );
-                
+                                
+                                $row = $query->numRows();
                                 $result = $query->fetch();
-                
-                                $sql = '
-                                    DELETE FROM
-                                        users
-                                    WHERE
-                                        id = :id
-                                ';
-                
-                                try {
-                                    $this->db->begin();
-                
-                                    $del = $this->db->execute(
-                                        $sql,
-                                        [
-                                            'id' => $user->getId()
-                                        ]
-                                    );
-                
-                                    if ( $del ) {
-                                        if ( $this->redis->exists($result['email']) ) {
-                                            $this->redis->del($result['email']);
+
+                                if ( $row == 1 ) {
+                                    $sql = '
+                                        DELETE FROM
+                                            users
+                                        WHERE
+                                            id = :id
+                                    ';
+                    
+                                    try {
+                                        $this->db->begin();
+                    
+                                        $del = $this->db->execute(
+                                            $sql,
+                                            [
+                                                'id' => $user->getId()
+                                            ]
+                                        );
+                    
+                                        if ( $del ) {
+                                            if ( $this->redis->exists($result['email']) ) {
+                                                $this->redis->del($result['email']);
+                                            }
+                    
+                                            $contents = [
+                                                'msg' => 'Usuário deletado com sucesso!'
+                                            ];
+                    
+                                            $response
+                                                ->setJsonContent($contents, JSON_PRETTY_PRINT, 200)
+                                                ->send();
+                                        } else {
+                                            $contents = [
+                                                'msg' => 'Não foi possível deletar usuário!'
+                                            ];
+                    
+                                            $response
+                                                ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                                ->send();
                                         }
-                
+                    
+                                        $this->db->commit();
+                                    } catch(Exception $error) {
+                                        $this->db->rollback();
+                    
                                         $contents = [
-                                            'msg' => 'Usuário deletado com sucesso!'
+                                            'msg' => 'Ocorreu um erro em nosso servidor, tente mais tarde!'
                                         ];
-                
+                        
                                         $response
-                                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 200)
-                                            ->send();
-                                    } else {
-                                        $contents = [
-                                            'msg' => 'Não foi possível deletar usuário!'
-                                        ];
-                
-                                        $response
-                                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 500)
                                             ->send();
                                     }
-                
-                                    $this->db->commit();
-                                } catch(Exception $error) {
-                                    $this->db->rollback();
-                
+                                } else {
                                     $contents = [
-                                        'msg' => 'Ocorreu um erro em nosso servidor, tente mais tarde!'
+                                        'msg' => 'Usuário não encontrado!'
                                     ];
                     
                                     $response
-                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 500)
+                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
                                         ->send();
                                 }
                             } else {
