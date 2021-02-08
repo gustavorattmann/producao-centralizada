@@ -53,7 +53,7 @@
                                 if ( !empty($products) ) {
                                     foreach ($products as $key => $product) {
                                         $contents[$key] = [
-                                            'products' => [
+                                            'product' => [
                                                 'id'       => $product['id'],
                                                 'name'     => $product['name'],
                                                 'category' => $product['category']
