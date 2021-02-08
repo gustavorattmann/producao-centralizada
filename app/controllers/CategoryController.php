@@ -41,7 +41,8 @@
                                     SELECT
                                         *
                                     FROM
-                                        category;
+                                        category
+                                    ORDER BY id ASC;
                                 ';
 
                                 $result = $this->db->fetchAll($sql);
@@ -498,13 +499,9 @@
 
                                     $sql_product = '
                                         DELETE FROM
-                                            products p
-                                        INNER JOIN
-                                            category c
-                                        ON
-                                            p.category = c.id
+                                            products
                                         WHERE
-                                            p.category = :id
+                                            category = :id
                                     ';
 
                                     try {
@@ -517,31 +514,21 @@
                                             ]
                                         );
 
-                                        if ( $del_product ) {
-                                            $del = $this->db->execute(
-                                                $sql,
-                                                [
-                                                    'id' => $category->getId()
-                                                ]
-                                            );
-    
-                                            if ( $del ) {
-                                                $contents = [
-                                                    'msg' => 'Categoria deletada com sucesso!'
-                                                ];
-                        
-                                                $response
-                                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 200)
-                                                    ->send();
-                                            } else {
-                                                $contents = [
-                                                    'msg' => 'Não foi possível deletar categoria!'
-                                                ];
-                        
-                                                $response
-                                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
-                                                    ->send();
-                                            }
+                                        $del = $this->db->execute(
+                                            $sql,
+                                            [
+                                                'id' => $category->getId()
+                                            ]
+                                        );
+
+                                        if ( $del ) {
+                                            $contents = [
+                                                'msg' => 'Categoria deletada com sucesso!'
+                                            ];
+                    
+                                            $response
+                                                ->setJsonContent($contents, JSON_PRETTY_PRINT, 200)
+                                                ->send();
                                         } else {
                                             $contents = [
                                                 'msg' => 'Não foi possível deletar categoria!'
