@@ -58,6 +58,7 @@
     $orders->setHandler(new OrdersController())
            ->setPrefix('/api/orders')
            ->get('/', 'index')
+           ->get('/view/{id}', 'view')
            ->post('/register', 'register')
            ->put('/update/{id}', 'update')
            ->delete('/delete/{id}', 'delete');
