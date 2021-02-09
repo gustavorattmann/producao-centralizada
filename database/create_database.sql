@@ -1,6 +1,7 @@
 USE producao_centralizada;
 
-DROP TABLE IF EXISTS product_has_raw_material;
+DROP TABLE IF EXISTS production;
+DROP TABLE IF EXISTS orders;
 DROP TABLE IF EXISTS raw_materials;
 DROP TABLE IF EXISTS products;
 DROP TABLE IF EXISTS category;
@@ -49,21 +50,31 @@ CREATE TABLE IF NOT EXISTS raw_materials
 	CONSTRAINT un_raw_materials_name UNIQUE (name)
 );
 
-CREATE TABLE IF NOT EXISTS product_has_raw_material
+CREATE TABLE IF NOT EXISTS orders
 (
-	id INTEGER NOT NULL AUTO_INCREMENT,
+    id INTEGER NOT NULL AUTO_INCREMENT,
     product INTEGER NOT NULL,
     raw_material INTEGER NOT NULL,
     quantity_product_requested INTEGER CHECK (quantity_product_requested > 0) NOT NULL,
+    quantity_raw_material_limit INTEGER CHECK (quantity_raw_material_limit > 0) NOT NULL,
+    date TIMESTAMP NOT NULL,
+
+    CONSTRAINT pk_orders PRIMARY KEY (id),
+    CONSTRAINT fk_products FOREIGN KEY (product) REFERENCES products (id),
+    CONSTRAINT fk_raw_materials FOREIGN KEY (raw_material) REFERENCES raw_materials (id)
+);
+
+CREATE TABLE IF NOT EXISTS production
+(
+	id INTEGER NOT NULL AUTO_INCREMENT,
+    orders INTEGER NOT NULL,
     quantity_product_produced INTEGER CHECK (quantity_product_produced > 0) NOT NULL,
     quantity_product_losted INTEGER CHECK (quantity_product_losted > 0) NOT NULL,
-    quantity_raw_material_limit INTEGER CHECK (quantity_raw_material_limit > 0) NOT NULL,
     quantity_raw_material_used INTEGER CHECK (quantity_raw_material_used > 0) NOT NULL,
     quantity_raw_material_losted INTEGER CHECK (quantity_raw_material_losted > 0) NOT NULL,
     justification TEXT NULL,
     date TIMESTAMP NOT NULL,
     
-    CONSTRAINT pk_product_has_raw_material PRIMARY KEY (id),
-    CONSTRAINT fk_products FOREIGN KEY (product) REFERENCES products (id),
-    CONSTRAINT fk_raw_materials FOREIGN KEY (raw_material) REFERENCES raw_materials (id)
+    CONSTRAINT pk_production PRIMARY KEY (id),
+    CONSTRAINT fk_orders FOREIGN KEY (orders) REFERENCES orders (id)
 );
