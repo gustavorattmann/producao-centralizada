@@ -53,6 +53,7 @@ CREATE TABLE IF NOT EXISTS raw_materials
 CREATE TABLE IF NOT EXISTS orders
 (
     id INTEGER NOT NULL AUTO_INCREMENT,
+    user INTEGER NOT NULL,
     product INTEGER NOT NULL,
     raw_material INTEGER NOT NULL,
     quantity_product_requested INTEGER CHECK (quantity_product_requested > 0) NOT NULL,
@@ -60,6 +61,7 @@ CREATE TABLE IF NOT EXISTS orders
     date TIMESTAMP NOT NULL,
 
     CONSTRAINT pk_orders PRIMARY KEY (id),
+    CONSTRAINT fk_users_orders FOREIGN KEY (user) REFERENCES users (id),
     CONSTRAINT fk_products FOREIGN KEY (product) REFERENCES products (id),
     CONSTRAINT fk_raw_materials FOREIGN KEY (raw_material) REFERENCES raw_materials (id)
 );
@@ -67,6 +69,7 @@ CREATE TABLE IF NOT EXISTS orders
 CREATE TABLE IF NOT EXISTS production
 (
 	id INTEGER NOT NULL AUTO_INCREMENT,
+    user INTEGER NOT NULL,
     orders INTEGER NOT NULL,
     quantity_product_produced INTEGER CHECK (quantity_product_produced > 0) NOT NULL,
     quantity_product_losted INTEGER CHECK (quantity_product_losted > 0) NOT NULL,
@@ -76,5 +79,6 @@ CREATE TABLE IF NOT EXISTS production
     date TIMESTAMP NOT NULL,
     
     CONSTRAINT pk_production PRIMARY KEY (id),
+    CONSTRAINT fk_users_production FOREIGN KEY (user) REFERENCES users (id),
     CONSTRAINT fk_orders FOREIGN KEY (orders) REFERENCES orders (id)
 );
