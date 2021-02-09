@@ -5,6 +5,8 @@
     use App\Controllers\ProductController;
     use App\Controllers\CategoryController;
     use App\Controllers\RawMaterialController;
+    use App\Controllers\OrdersController;
+    use App\Controllers\ProductionController;
 
     $users = new MicroCollection();
     $users->setHandler(new UserController())
@@ -51,6 +53,26 @@
                  ->delete('/delete/{id}', 'delete');
 
     $app->mount($rawMaterials);
+
+    $orders = new MicroCollection();
+    $orders->setHandler(new OrdersController())
+           ->setPrefix('/api/orders')
+           ->get('/', 'index')
+           ->post('/register', 'register')
+           ->put('/update/{id}', 'update')
+           ->delete('/delete/{id}', 'delete');
+
+    $app->mount($orders);
+
+    $production = new MicroCollection();
+    $production->setHandler(new ProductionController())
+               ->setPrefix('/api/production')
+               ->get('/', 'index')
+               ->get('/product/{id}', 'product')
+               ->post('/produced', 'produced')
+               ->post('/report', 'report');
+
+    $app->mount($production);
 
     $app->notFound(
         function () use ($app) {
