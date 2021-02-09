@@ -47,7 +47,7 @@
                                 if ( !empty($raw_materials) ) {
                                     foreach ($raw_materials as $key => $raw_material) {
                                         $contents[$key] = [
-                                            'raw_materials' => [
+                                            'raw_material' => [
                                                 'id'    => $raw_material['id'],
                                                 'name'  => $raw_material['name'],
                                                 'stock' => $raw_material['stock']
