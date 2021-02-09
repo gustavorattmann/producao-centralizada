@@ -12,8 +12,6 @@
     {
         public function index()
         {
-            $category = new Category();
-            
             $request = new Request();
 
             $response = new Response();
