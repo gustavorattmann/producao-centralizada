@@ -4,6 +4,7 @@
     use App\Controllers\UserController;
     use App\Controllers\ProductController;
     use App\Controllers\CategoryController;
+    use App\Controllers\RawMaterialController;
 
     $users = new MicroCollection();
     $users->setHandler(new UserController())
@@ -40,6 +41,16 @@
              ->delete('/delete/{id}', 'delete');
 
     $app->mount($category);
+
+    $rawMaterials = new MicroCollection();
+    $rawMaterials->setHandler(new RawMaterialController())
+                 ->setPrefix('/api/raw-materials')
+                 ->get('/', 'index')
+                 ->post('/register', 'register')
+                 ->put('/update/{id}', 'update')
+                 ->delete('/delete/{id}', 'delete');
+
+    $app->mount($rawMaterials);
 
     $app->notFound(
         function () use ($app) {
