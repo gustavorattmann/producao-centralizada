@@ -7,6 +7,7 @@
     class Orders extends Model
     {
         private $id;
+        private $user;
         private $product;
         private $raw_material;
         private $quantity_product_requested;
@@ -16,6 +17,11 @@
         public function getId()
         {
             return $this->id;
+        }
+
+        public function getUser()
+        {
+            return $this->user;
         }
         
         public function getProduct()
@@ -46,6 +52,11 @@
         public function setId(int $id)
         {
             $this->id = $id;
+        }
+
+        public function setUser(int $user)
+        {
+            $this->user = $user;
         }
         
         public function setProduct(int $product)
