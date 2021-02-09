@@ -64,7 +64,7 @@
                                         ->send();
                                 } else {
                                     $contents = [
-                                        'msg' => 'Nenhuma categoria encontrada!'
+                                        'msg' => 'Nenhuma produto encontrado!'
                                     ];
                     
                                     $response
@@ -73,7 +73,7 @@
                                 }
                             } else {
                                 $contents = [
-                                    'msg' => 'Você não possui autorização para fazer alterações nesse usuário!'
+                                    'msg' => 'Você não possui autorização para acessar essa página!'
                                 ];
                 
                                 $response
