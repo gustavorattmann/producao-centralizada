@@ -12,8 +12,6 @@
     {
         public function index()
         {
-            $product = new Product();
-            
             $request = new Request();
 
             $response = new Response();
