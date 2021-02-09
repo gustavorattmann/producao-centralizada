@@ -35,7 +35,7 @@
 
                     if ( date(\DateTime::ISO8601) <= $nbf_array ) {
                         if ( intval($token_array['situation']) == 1 ) {
-                            if ( intval($token_array['level']) == 0 ) {
+                            if ( intval($token_array['level']) == 0 || intval($token_array['level']) == 2 ) {
                                 $sql = '
                                     SELECT
                                         *
@@ -173,7 +173,7 @@
                 $nbf_array = (array) $token_array['nbf'];
             }
 
-            if ( $bearerToken == $this->redis->get($_SESSION['user']) && intval($token_array['level']) != 0 ) {
+            if ( $bearerToken == $this->redis->get($_SESSION['user']) && (intval($token_array['level']) != 0 || intval($token_array['level']) != 2) ) {
                 if ( date(\DateTime::ISO8601) <= $nbf_array ) {
                     if ( intval($token_array['situation']) == 1 ) {
                         $contents = [
@@ -202,104 +202,108 @@
                         ->send();
                 }
             } else {
-                if ( empty($request->get('name')) && empty($request->get('email')) && empty($request->get('password'))
-                  && empty($request->get('level')) && empty($request->get('situation')) ) {
+                if ( intval($token_array['level']) != 0 || intval($token_array['level']) != 2 ) {
+                    if ( empty($request->get('name')) && empty($request->get('email')) && empty($request->get('password'))
+                         && empty($request->get('level')) && empty($request->get('situation')) ) {
+                        $contents = [
+                            'msg' => 'Dados incompletos!'
+                        ];
+        
+                        $response
+                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
+                            ->send();
+                    } else {
+                        $sql_verify_email = '
+                            SELECT
+                                email
+                            FROM
+                                users
+                            WHERE
+                                email = :email
+                        ';
+
+                        try {
+                            $this->db->begin();
+
+                            $email_verified = $this->db->query(
+                                $sql_verify_email,
+                                [
+                                    'email' => $request->get('email')
+                                ]
+                            );
+
+                            if ( $email_verified->numRows() > 0 ) {
+                                $response
+                                    ->setStatusCode(400)
+                                    ->setContent('Usuário já está cadastrado!')
+                                    ->send();
+                            } else {
+                                $password_hashed = $security->hash($request->get('password'));
+
+                                $user->setName($request->get('name'));
+                                $user->setEmail($request->get('email'));
+                                $user->setPassword($password_hashed);
+                                $user->setLevel($request->get('level'));
+                                $user->setSituation($request->get('situation'));
+
+                                $sql = '
+                                    INSERT INTO users
+                                        (name, email, password, level, situation)
+                                    VALUES
+                                        (:name, :email, :password, :level, :situation);
+                                ';
+
+                                $success = $this->db->query(
+                                    $sql,
+                                    [
+                                        'name'      => $user->getName(),
+                                        'email'     => $user->getEmail(),
+                                        'password'  => $user->getPassword(),
+                                        'level'     => $user->getLevel(),
+                                        'situation' => $user->getSituation(),
+                                    ]
+                                );
+            
+                                if ( $success ) {
+                                    $contents = [
+                                        'msg' => 'Cadastro realizado com sucesso!'
+                                    ];
+                    
+                                    $response
+                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 201)
+                                        ->send();
+                                } else {
+                                    $contents = [
+                                        'msg' => 'Falha no cadastro!'
+                                    ];
+                    
+                                    $response
+                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                        ->send();
+                                }
+                            }
+
+                            $this->db->commit();
+                        } catch (Exception $error) {
+                            $this->db->rollback();
+
+                            $contents = [
+                                'msg' => 'Ocorreu um erro em nosso servidor, tente mais tarde!'
+                            ];
+            
+                            $response
+                                ->setJsonContent($contents, JSON_PRETTY_PRINT, 500)
+                                ->send();
+                        }
+                    }
+                } else {
                     $contents = [
-                        'msg' => 'Dados incompletos!'
+                        'msg' => 'Você não possui autorização para acessar essa página!'
                     ];
     
                     $response
                         ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
                         ->send();
-                } else {
-                    $sql_verify_email = '
-                        SELECT
-                            email
-                        FROM
-                            users
-                        WHERE
-                            email = :email
-                    ';
-
-                    try {
-                        $this->db->begin();
-
-                        $email_verified = $this->db->query(
-                            $sql_verify_email,
-                            [
-                                'email' => $request->get('email')
-                            ]
-                        );
-
-                        if ( $email_verified->numRows() > 0 ) {
-                            $response
-                                ->setStatusCode(400)
-                                ->setContent('Usuário já está cadastrado!')
-                                ->send();
-                        } else {
-                            $password_hashed = $security->hash($request->get('password'));
-
-                            $user->setName($request->get('name'));
-                            $user->setEmail($request->get('email'));
-                            $user->setPassword($password_hashed);
-
-                            if ( !empty(intval($token_array['level'])) && intval($token_array['level']) == 0 ) {
-                                $user->setLevel($request->get('level'));
-                                $user->setSituation($request->get('situation'));
-                            } else {
-                                $user->setLevel(2);
-                                $user->setSituation(1);
-                            }
-
-                            $sql = '
-                                INSERT INTO users
-                                    (name, email, password, level, situation)
-                                VALUES
-                                    (:name, :email, :password, :level, :situation);
-                            ';
-
-                            $success = $this->db->query(
-                                $sql,
-                                [
-                                    'name'      => $user->getName(),
-                                    'email'     => $user->getEmail(),
-                                    'password'  => $user->getPassword(),
-                                    'level'     => $user->getLevel(),
-                                    'situation' => $user->getSituation(),
-                                ]
-                            );
-        
-                            if ( $success ) {
-                                $contents = [
-                                    'msg' => 'Cadastro realizado com sucesso!'
-                                ];
-                
-                                $response
-                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 201)
-                                    ->send();
-                            } else {
-                                $contents = [
-                                    'msg' => 'Falha no cadastro!'
-                                ];
-                
-                                $response
-                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
-                                    ->send();
-                            }
-                        }
-
-                        $this->db->commit();
-                    } catch (Exception $error) {
-                        $this->db->rollback();
-
-                        $contents = [
-                            'msg' => 'Ocorreu um erro em nosso servidor, tente mais tarde!'
-                        ];
-        
-                        $response
-                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 500)
-                            ->send();
-                    }
                 }
             }
         }
@@ -336,7 +340,7 @@
                                 $user->setId($id);
                             }
 
-                            if ( intval($token_array['id']) == $user->getId() || intval($token_array['level']) == 0 ) {
+                            if ( intval($token_array['id']) == $user->getId() || (intval($token_array['level']) == 0 || intval($token_array['level']) == 2) ) {
                                 $sql_verify = '
                                     SELECT
                                         *
@@ -386,21 +390,22 @@
                                     } else {
                                         $user->setEmail($result['email']);
                                     }
-                
-                                    if ( $request->getPut('situation') != $result['situation'] ) {
-                                        $user->setSituation($request->getPut('situation'));
-                                    } else {
-                                        $user->setSituation($result['situation']);
-                                    }
-                
-                                    if ( intval($token_array['level']) == 0 ) {
+                                    
+                                    if ( intval($token_array['level']) == 0 || intval($token_array['level']) == 2 ) {
                                         if ( $request->getPut('level') != $result['level'] ) {
                                             $user->setLevel($request->getPut('level'));
                                         } else {
                                             $user->setLevel($result['level']);
                                         }
+
+                                        if ( $request->getPut('situation') != $result['situation'] ) {
+                                            $user->setSituation($request->getPut('situation'));
+                                        } else {
+                                            $user->setSituation($result['situation']);
+                                        }
                                     } else {
-                                        $user->setLevel(2);
+                                        $user->setLevel(4);
+                                        $user->setSituation(1);
                                     }
                 
                                     $sql = '
@@ -757,7 +762,7 @@
                                 $user->setId($id);
                             }
 
-                            if ( intval($token_array['id']) == $user->getId() || intval($token_array['level']) == 0 ) {
+                            if ( intval($token_array['id']) == $user->getId() || (intval($token_array['level']) == 0 || intval($token_array['level']) == 2) ) {
                                 $sql_verify_email = '
                                     SELECT
                                         email
@@ -840,7 +845,7 @@
                                 }
                             } else {
                                 $contents = [
-                                    'msg' => 'Você não possui autorização para fazer alterações nesse usuário!'
+                                    'msg' => 'Você não possui autorização para deletar esse usuário!'
                                 ];
                 
                                 $response
