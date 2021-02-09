@@ -585,7 +585,7 @@
                                         $del = $this->db->execute(
                                             $sql,
                                             [
-                                                'id' => $id
+                                                'id' => $product->getId()
                                             ]
                                         );
 
