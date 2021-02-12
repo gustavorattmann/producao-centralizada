@@ -71,6 +71,8 @@
                ->get('/', 'index')
                ->get('/product/{id}', 'product')
                ->post('/produced', 'produced')
+               ->put('/update/{id}', 'update')
+               ->delete('/delete/{id}', 'delete')
                ->post('/report', 'report');
 
     $app->mount($production);
