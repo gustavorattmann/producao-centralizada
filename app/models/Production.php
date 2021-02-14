@@ -8,8 +8,7 @@
     {
         private $id;
         private $user;
-        private $product;
-        private $raw_material;
+        private $ordered;
         private $quantity_product_produced;
         private $quantity_product_losted;
         private $quantity_raw_material_used;
@@ -27,14 +26,9 @@
             return $this->user;
         }
         
-        public function getProduct()
+        public function getOrdered()
         {
-            return $this->product;
-        }
-
-        public function getRawMaterial()
-        {
-            return $this->raw_material;
+            return $this->ordered;
         }
 
         public function getQuantityProductProduced()
@@ -77,14 +71,9 @@
             $this->user = $user;
         }
         
-        public function setProduct(int $product)
+        public function setOrdered(int $ordered)
         {
-            $this->product = $product;
-        }
-
-        public function setRawMaterial(int $raw_material)
-        {
-            $this->raw_material = $raw_material;
+            $this->ordered = $ordered;
         }
 
         public function setQuantityProductProduced(int $quantity_product_produced)
