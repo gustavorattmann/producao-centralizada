@@ -7,21 +7,29 @@
     class Orders extends Model
     {
         private $id;
-        private $user;
+        private $solicitor;
+        private $designated;
         private $product;
         private $raw_material;
         private $quantity_product_requested;
         private $quantity_raw_material_limit;
-        private $date;
+        private $status_order;
+        private $date_initial;
+        private $date_final;
 
         public function getId()
         {
             return $this->id;
         }
 
-        public function getUser()
+        public function getSolicitor()
         {
-            return $this->user;
+            return $this->solicitor;
+        }
+
+        public function getDesignated()
+        {
+            return $this->designated;
         }
         
         public function getProduct()
@@ -44,9 +52,19 @@
             return $this->quantity_raw_material_limit;
         }
 
-        public function getDate()
+        public function getStatusOrder()
         {
-            return $this->date;
+            return $this->status_order;
+        }
+
+        public function getDateInitial()
+        {
+            return $this->date_initial;
+        }
+
+        public function getDateFinal()
+        {
+            return $this->date_final;
         }
 
         public function setId(int $id)
@@ -54,9 +72,14 @@
             $this->id = $id;
         }
 
-        public function setUser(int $user)
+        public function setSolicitor(int $solicitor)
         {
-            $this->user = $user;
+            $this->solicitor = $solicitor;
+        }
+
+        public function setDesignated(int $designated)
+        {
+            $this->designated = $designated;
         }
         
         public function setProduct(int $product)
@@ -71,25 +94,27 @@
 
         public function setQuantityProductRequested(int $quantity_product_requested)
         {
-            if ( $quantity_product_requested > 0 ) {
-                $this->quantity_product_requested = $quantity_product_requested;
-            } else {
-                return 'Insira um valor maior que 0';
-            }            
+            $this->quantity_product_requested = $quantity_product_requested;           
         }
 
         public function setQuantityRawMaterialLimit(int $quantity_raw_material_limit)
         {
-            if ( $quantity_raw_material_limit > 0 ) {
-                $this->quantity_raw_material_limit = $quantity_raw_material_limit;
-            } else {
-                return 'Insira um valor maior que 0';
-            }
+            $this->quantity_raw_material_limit = $quantity_raw_material_limit;
         }
 
-        public function setDate($date)
+        public function setStatusOrder(int $status_order)
         {
-            $this->date = $date;
+            $this->status_order = $status_order;
+        }
+
+        public function setDateInitial($date_initial)
+        {
+            $this->date_initial = $date_initial;
+        }
+
+        public function setDateFinal($date_final)
+        {
+            $this->date_final = $date_final;
         }
     }
 
