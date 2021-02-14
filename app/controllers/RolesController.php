@@ -69,11 +69,11 @@
                                 }
                             } else {
                                 $contents = [
-                                    'msg' => 'Você não possui autorização para visualizar cargos!'
+                                    'msg' => 'Você não possui autorização para acessar essa página!'
                                 ];
                 
                                 $response
-                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
                                     ->send();
                             }
                         } else {
@@ -225,16 +225,16 @@
                                     ];
                     
                                     $response
-                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
+                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
                                         ->send();
                                 }
                             } else {
                                 $contents = [
-                                    'msg' => 'Você não possui autorização para cadastrar cargos!'
+                                    'msg' => 'Você não possui autorização para acessar essa página!'
                                 ];
                 
                                 $response
-                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
                                     ->send();
                             }
                         } else {
@@ -312,7 +312,7 @@
                                         FROM
                                             roles
                                         WHERE
-                                            name = :name
+                                            name = :name;
                                     ';
 
                                     $query = $this->db->query(
@@ -331,16 +331,7 @@
                                             SET
                                                 name = :name
                                             WHERE
-                                                id = :id
-                                        ';
-
-                                        $sql_user = '
-                                            UPDATE
-                                                users
-                                            SET
-                                                role = :role
-                                            WHERE
-                                                level = :level
+                                                id = :id;
                                         ';
 
                                         try {
@@ -355,31 +346,13 @@
                                             );
 
                                             if ( $update ) {
-                                                $update_level = $this->db->execute(
-                                                    $sql_user,
-                                                    [
-                                                        'level' => $roles->getId(),
-                                                        'role'  => ''
-                                                    ]
-                                                );
-    
-                                                if ( $update_level ) {
-                                                    $contents = [
-                                                        'msg' => 'Cargo alterado com sucesso!'
-                                                    ];
-                                    
-                                                    $response
-                                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 201)
-                                                        ->send();
-                                                } else {
-                                                    $contents = [
-                                                        'msg' => 'Não foi possível remover cargo dos usuários!'
-                                                    ];
-                            
-                                                    $response
-                                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
-                                                        ->send();
-                                                }
+                                                $contents = [
+                                                    'msg' => 'Cargo alterado com sucesso!'
+                                                ];
+                                
+                                                $response
+                                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 201)
+                                                    ->send();
                                             } else {
                                                 $contents = [
                                                     'msg' => 'Falha na alteração de cargo!'
@@ -422,11 +395,11 @@
                                 }
                             } else {
                                 $contents = [
-                                    'msg' => 'Você não possui autorização para visualizar os cargos!'
+                                    'msg' => 'Você não possui autorização para acessar essa página!'
                                 ];
                 
                                 $response
-                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
                                     ->send();
                             }
                         } else {
@@ -515,62 +488,61 @@
                                 if ( $verify_role_exist == 1 ) {
                                     $roles->setId($id);
 
-                                    $sql = '
-                                        DELETE FROM
-                                            roles
-                                        WHERE
-                                            id = :id
-                                    ';
-
                                     $sql_user = '
                                         UPDATE
                                             users
                                         SET
-                                            role = :role
+                                            level = :role
                                         WHERE
-                                            level = :level
+                                            level = :level;
+                                    ';
+                                    
+                                    $sql = '
+                                        DELETE FROM
+                                            roles
+                                        WHERE
+                                            id = :id;
                                     ';
 
                                     try {
                                         $this->db->begin();
 
-                                        
-                                        $del = $this->db->execute(
-                                            $sql,
+                                        $del_level = $this->db->execute(
+                                            $sql_user,
                                             [
-                                                'id' => $roles->getId()
+                                                'level' => $roles->getId(),
+                                                'role'  => NULL
                                             ]
                                         );
 
-                                        if ( $del ) {
-                                            $del_level = $this->db->execute(
-                                                $sql_user,
+                                        if ( $del_level ) {
+                                            $del = $this->db->execute(
+                                                $sql,
                                                 [
-                                                    'level' => $roles->getId(),
-                                                    'role'  => ''
+                                                    'id' => $roles->getId()
                                                 ]
                                             );
 
-                                            if ( $del_level ) {
+                                            if ( $del ) {
                                                 $contents = [
                                                     'msg' => 'Cargo deletado com sucesso!'
                                                 ];
                         
                                                 $response
                                                     ->setJsonContent($contents, JSON_PRETTY_PRINT, 200)
-                                                    ->send();
+                                                    ->send();                                      
                                             } else {
                                                 $contents = [
-                                                    'msg' => 'Não foi possível remover cargo dos usuários!'
+                                                    'msg' => 'Não foi possível deletar cargo!'
                                                 ];
                         
                                                 $response
                                                     ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
                                                     ->send();
-                                            }                                            
+                                            }
                                         } else {
                                             $contents = [
-                                                'msg' => 'Não foi possível deletar cargo!'
+                                                'msg' => 'Não foi possível remover cargo dos usuários!'
                                             ];
                     
                                             $response
@@ -601,11 +573,11 @@
                                 }
                             } else {
                                 $contents = [
-                                    'msg' => 'Você não possui autorização para visualizar cargos!'
+                                    'msg' => 'Você não possui autorização para acessar essa página!'
                                 ];
                 
                                 $response
-                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
                                     ->send();
                             }
                         } else {
