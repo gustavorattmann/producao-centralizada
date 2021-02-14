@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS production
 (
 	id INTEGER NOT NULL AUTO_INCREMENT,
     user INTEGER NOT NULL,
-    orders INTEGER NOT NULL,
+    ordered INTEGER NOT NULL,
     quantity_product_produced INTEGER CHECK (quantity_product_produced > 0) NOT NULL,
     quantity_product_losted INTEGER CHECK (quantity_product_losted > 0) NOT NULL,
     quantity_raw_material_used INTEGER CHECK (quantity_raw_material_used > 0) NOT NULL,
@@ -80,5 +80,5 @@ CREATE TABLE IF NOT EXISTS production
     
     CONSTRAINT pk_production PRIMARY KEY (id),
     CONSTRAINT fk_users_production FOREIGN KEY (user) REFERENCES users (id),
-    CONSTRAINT fk_orders FOREIGN KEY (orders) REFERENCES orders (id)
+    CONSTRAINT fk_orders FOREIGN KEY (ordered) REFERENCES orders (id)
 );
