@@ -35,28 +35,41 @@
 
                     if ( date(\DateTime::ISO8601) <= $nbf_array ) {
                         if ( intval($token_array['situation']) == 1 ) {
-                            if ( intval($token_array['level']) == 0 || intval($token_array['level']) == 2 ) {
+                            if ( intval($token_array['level']) == 1 || intval($token_array['level']) == 2 ) {
                                 $sql = '
                                     SELECT
-                                        *
+                                        u.id AS id, u.name AS name, u.email AS email, r.name AS role, u.situation AS situation
                                     FROM
-                                        users
+                                        users u
+                                    LEFT JOIN
+                                        roles r
+                                    ON
+                                        u.level = r.id
+                                    ORDER BY u.id ASC;
                                 ';
             
                                 $users = $this->db->fetchAll($sql);
 
                                 if ( !empty($users) ) {
                                     foreach ($users as $key => $user) {
+                                        if ( $user['role'] == NULL ) {
+                                            $user['role'] = '';
+                                        }
+
                                         $contents[$key] = [
                                             'user' => [
                                                 'id'        => $user['id'],
                                                 'name'      => $user['name'],
                                                 'email'     => $user['email'],
-                                                'level'     => $user['level'],
+                                                'role'      => $user['role'],
                                                 'situation' => $user['situation']
                                             ]
                                         ];
                                     }
+
+                                    $response
+                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 200)
+                                        ->send();
                                 } else {
                                     $contents = [
                                         'msg' => 'Nenhum usuário encontrado!'
@@ -67,48 +80,14 @@
                                         ->send();
                                 }
                             } else {
-                                $sql = '
-                                    SELECT
-                                        *
-                                    FROM
-                                        users
-                                    WHERE
-                                        email = :email
-                                ';
-            
-                                $result = $this->db->query(
-                                    $sql,
-                                    [
-                                        'email' => $_SESSION['user']
-                                    ]
-                                );
-            
-                                $user = $result->fetch();
-
-                                if ( !empty($user) ) {
-                                    $contents = [
-                                        'user' => [
-                                            'id'        => $user['id'],
-                                            'name'      => $user['name'],
-                                            'email'     => $user['email'],
-                                            'level'     => $user['level'],
-                                            'situation' => $user['situation']
-                                        ]
-                                    ];
-                                } else {
-                                    $contents = [
-                                        'msg' => 'Seu usuário não foi encontrado!'
-                                    ];
-                    
-                                    $response
-                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
-                                        ->send();
-                                }
+                                $contents = [
+                                    'msg' => 'Você não possui autorização para acessar essa página!'
+                                ];
+                
+                                $response
+                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
+                                    ->send();
                             }
-            
-                            $response
-                                ->setJsonContent($contents, JSON_PRETTY_PRINT, 200)
-                                ->send();
                         } else {
                             $contents = [
                                 'msg' => 'Seu usuário não está ativo, contate um administrador ou RH!'
@@ -120,7 +99,137 @@
                         }
                     } else {
                         $contents = [
-                            'msg' => 'Não é possível acessar essa página, faça login!'
+                            'msg' => 'Sua sessão expirou. Por favor, faça login novamente!'
+                        ];
+        
+                        $response
+                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
+                            ->send();
+                    }
+                } else {
+                    $contents = [
+                        'msg' => 'Token inválido!'
+                    ];
+    
+                    $response
+                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
+                        ->send();
+                }
+            } else {
+                $contents = [
+                    'msg' => 'Seu usuário não está logado. Por favor, faça login!'
+                ];
+
+                $response
+                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
+                    ->send();
+            }
+        }
+
+        public function profile($id = NULL)
+        {
+            $users = new Users();
+
+            $request = new Request();
+
+            $response = new Response();
+            
+            session_start();
+
+            if ( !empty($_SESSION['user']) && $this->redis->exists($_SESSION['user']) ) {
+                $bearerToken = $request->getHeaders()['Authorization'];
+
+                $bearerToken = str_replace('Bearer ', '', $bearerToken);
+
+                if ( !empty($bearerToken) && $bearerToken == $this->redis->get($_SESSION['user']) ) {
+                    $key = base64_encode($_ENV['SECRET_KEY'] . $_SESSION['user']);
+
+                    JWT::$leeway = 60;
+                    $token = JWT::decode($bearerToken, $key, array('HS512'));
+
+                    $token_array = (array) $token;
+                    $nbf_array = (array) $token_array['nbf'];
+
+                    if ( date(\DateTime::ISO8601) <= $nbf_array ) {
+                        if ( intval($token_array['situation']) == 1 ) {
+                            if ( empty($id) ) {
+                                $users->setId(intval($token_array['id']));
+                            } else {
+                                $users->setId($id);
+                            }
+
+                            if ( intval($token_array['id']) == $users->getId() || (intval($token_array['level']) == 1 || intval($token_array['level']) == 2) ) {
+                                $sql = '
+                                SELECT
+                                    u.id AS id, u.name AS name, u.email AS email, r.name AS role, u.situation AS situation
+                                FROM
+                                    users u
+                                LEFT JOIN
+                                    roles r
+                                ON
+                                    u.level = r.id
+                                WHERE
+                                    u.id = :id;
+                                ';
+            
+                                $query = $this->db->query(
+                                    $sql,
+                                    [
+                                        'id' => $users->getId()
+                                    ]
+                                );
+
+                                $row = $query->numRows();
+                                $user = $query->fetch();
+
+                                if ( $row == 1 ) {
+                                    if ( $user['role'] == NULL ) {
+                                        $user['role'] = '';
+                                    }
+
+                                    $contents = [
+                                        'user' => [
+                                            'id'        => $user['id'],
+                                            'name'      => $user['name'],
+                                            'email'     => $user['email'],
+                                            'role'      => $user['role'],
+                                            'situation' => $user['situation']
+                                        ]
+                                    ];
+
+                                    $response
+                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 200)
+                                        ->send();
+                                } else {
+                                    $contents = [
+                                        'msg' => 'Nenhum usuário encontrado!'
+                                    ];
+                    
+                                    $response
+                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                        ->send();
+                                }
+                            } else {
+                                $contents = [
+                                    'msg' => 'Você não possui autorização para acessar essa página!'
+                                ];
+                
+                                $response
+                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
+                                    ->send();
+                            }
+                        } else {
+                            $contents = [
+                                'msg' => 'Seu usuário não está ativo, contate um administrador ou RH!'
+                            ];
+            
+                            $response
+                                ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
+                                ->send();
+                        }
+                    } else {
+                        $contents = [
+                            'msg' => 'Sua sessão expirou. Por favor, faça login novamente!'
                         ];
         
                         $response
@@ -149,7 +258,7 @@
 
         public function register()
         {
-            $user = new User();
+            $users = new Users();
 
             $request = new Request();
 
@@ -175,24 +284,16 @@
 
                     if ( date(\DateTime::ISO8601) <= $nbf_array ) {
                         if ( intval($token_array['situation']) == 1 ) {
-                            if ( intval($token_array['level']) == 0 || intval($token_array['level']) == 2 ) {
-                                if ( empty($request->get('name')) && empty($request->get('email')) && empty($request->get('password'))
-                                     && empty($request->get('level')) && empty($request->get('situation')) ) {
-                                    $contents = [
-                                        'msg' => 'Dados incompletos!'
-                                    ];
-                    
-                                    $response
-                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
-                                        ->send();
-                                } else {
+                            if ( intval($token_array['level']) == 1 || intval($token_array['level']) == 2 ) {
+                                if ( !empty($request->get('name')) && !empty($request->get('email')) && !empty($request->get('password')) &&
+                                     !empty($request->get('level')) && !empty($request->get('situation')) ) {
                                     $sql_verify_email = '
                                         SELECT
                                             email
                                         FROM
                                             users
                                         WHERE
-                                            email = :email
+                                            email = :email;
                                     ';
 
                                     try {
@@ -205,7 +306,7 @@
                                             ]
                                         );
 
-                                        if ( $email_verified->numRows() > 0 ) {
+                                        if ( $email_verified->numRows() == 1 ) {
                                             $contents = [
                                                 'msg' => 'Usuário já está cadastrado!'
                                             ];
@@ -214,43 +315,69 @@
                                                 ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
                                                 ->send();
                                         } else {
-                                            $password_hashed = $security->hash($request->get('password'));
-
-                                            $user->setName($request->get('name'));
-                                            $user->setEmail($request->get('email'));
-                                            $user->setPassword($password_hashed);
-                                            $user->setLevel($request->get('level'));
-                                            $user->setSituation($request->get('situation'));
-
-                                            $sql = '
-                                                INSERT INTO users
-                                                    (name, email, password, level, situation)
-                                                VALUES
-                                                    (:name, :email, :password, :level, :situation);
+                                            $sql_verify_role = '
+                                                SELECT
+                                                    name
+                                                FROM
+                                                    roles
+                                                WHERE
+                                                    id = :id;
                                             ';
 
-                                            $success = $this->db->query(
-                                                $sql,
+                                            $role_verified = $this->db->query(
+                                                $sql_verify_role,
                                                 [
-                                                    'name'      => $user->getName(),
-                                                    'email'     => $user->getEmail(),
-                                                    'password'  => $user->getPassword(),
-                                                    'level'     => $user->getLevel(),
-                                                    'situation' => $user->getSituation(),
+                                                    'id' => intval($request->get('level'))
                                                 ]
                                             );
-                        
-                                            if ( $success ) {
-                                                $contents = [
-                                                    'msg' => 'Cadastro realizado com sucesso!'
-                                                ];
-                                
-                                                $response
-                                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 201)
-                                                    ->send();
+
+                                            if ( $role_verified->numRows() == 1 ) {
+                                                $password_hashed = $security->hash($request->get('password'));
+
+                                                $users->setName($request->get('name'));
+                                                $users->setEmail($request->get('email'));
+                                                $users->setPassword($password_hashed);
+                                                $users->setLevel(intval($request->get('level')));
+                                                $users->setSituation(intval($request->get('situation')));
+    
+                                                $sql = '
+                                                    INSERT INTO users
+                                                        (name, email, password, level, situation)
+                                                    VALUES
+                                                        (:name, :email, :password, :level, :situation);
+                                                ';
+    
+                                                $success = $this->db->query(
+                                                    $sql,
+                                                    [
+                                                        'name'      => $users->getName(),
+                                                        'email'     => $users->getEmail(),
+                                                        'password'  => $users->getPassword(),
+                                                        'level'     => $users->getLevel(),
+                                                        'situation' => $users->getSituation(),
+                                                    ]
+                                                );
+                            
+                                                if ( $success ) {
+                                                    $contents = [
+                                                        'msg' => 'Cadastro realizado com sucesso!'
+                                                    ];
+                                    
+                                                    $response
+                                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 201)
+                                                        ->send();
+                                                } else {
+                                                    $contents = [
+                                                        'msg' => 'Falha no cadastro!'
+                                                    ];
+                                    
+                                                    $response
+                                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                                        ->send();
+                                                }
                                             } else {
                                                 $contents = [
-                                                    'msg' => 'Falha no cadastro!'
+                                                    'msg' => 'Cargo não encontrado!'
                                                 ];
                                 
                                                 $response
@@ -271,6 +398,14 @@
                                             ->setJsonContent($contents, JSON_PRETTY_PRINT, 500)
                                             ->send();
                                     }
+                                } else {
+                                    $contents = [
+                                        'msg' => 'Dados incompletos!'
+                                    ];
+                    
+                                    $response
+                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                        ->send();
                                 }
                             } else {
                                 $contents = [
@@ -278,7 +413,7 @@
                                 ];
                 
                                 $response
-                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
                                     ->send();
                             }
                         } else {
@@ -292,7 +427,7 @@
                         }
                     } else {
                         $contents = [
-                            'msg' => 'Não é possível acessar essa página, faça login!'
+                            'msg' => 'Sua sessão expirou. Por favor, faça login novamente!'
                         ];
         
                         $response
@@ -321,7 +456,7 @@
 
         public function update($id = NULL)
         {
-            $user = new User();
+            $users = new Users();
 
             $request = new Request();
 
@@ -346,155 +481,181 @@
                     if ( date(\DateTime::ISO8601) <= $nbf_array ) {
                         if ( intval($token_array['situation']) == 1 ) {
                             if ( empty($id) ) {
-                                $user->setId(intval($token_array['id']));
+                                $users->setId(intval($token_array['id']));
                             } else {
-                                $user->setId($id);
+                                $users->setId($id);
                             }
 
-                            if ( intval($token_array['id']) == $user->getId() || (intval($token_array['level']) == 0 || intval($token_array['level']) == 2) ) {
-                                $sql_verify = '
+                            if ( intval($token_array['id']) == $user->getId() || (intval($token_array['level']) == 1 || intval($token_array['level']) == 2) ) {
+                                $sql_verify_role = '
                                     SELECT
                                         *
                                     FROM
-                                        users
+                                        roles
                                     WHERE
-                                        id = :id
+                                        id = :id;
                                 ';
                 
-                                $query = $this->db->query(
-                                    $sql_verify,
+                                $role_verified = $this->db->query(
+                                    $sql_verify_role,
                                     [
-                                        'id' => $user->getId()
+                                        'id' => $request->getPut('level')
                                     ]
                                 );
                 
-                                $result = $query->fetch();
-                
-                                if ( ( ($request->getPut('name') != $result['name']) || ($request->getPut('email') != $result['email']) ||
-                                    ($request->getPut('level') != $result['level']) || ($request->getPut('situation') != $result['situation']) ) ) {
-                                    if ( $request->getPut('name') != $result['name'] ) {
-                                        $user->setName($request->getPut('name'));
-                                    } else {
-                                        $user->setName($result['name']);
-                                    }
-
-                                    $sql_verify_email = '
+                                if ( $role_verified == 1 ) {
+                                    $sql_verify_user = '
                                         SELECT
-                                            email
+                                            *
                                         FROM
                                             users
                                         WHERE
-                                            email = :email
+                                            id = :id;
                                     ';
-
-                                    $query_email = $this->db->query(
-                                        $sql_verify_email,
+                    
+                                    $query = $this->db->query(
+                                        $sql_verify_user,
                                         [
-                                            'email' => $request->getPut('email')
+                                            'id' => $users->getId()
                                         ]
                                     );
-
-                                    $row = $query_email->numRows();
-                
-                                    if ( $request->getPut('email') != $result['email'] && $row == 0 ) {
-                                        $user->setEmail($request->getPut('email'));
-                                    } else {
-                                        $user->setEmail($result['email']);
-                                    }
-                                    
-                                    if ( intval($token_array['level']) == 0 || intval($token_array['level']) == 2 ) {
-                                        if ( $request->getPut('level') != $result['level'] ) {
-                                            $user->setLevel($request->getPut('level'));
+                    
+                                    $result = $query->fetch();
+                    
+                                    if ( ( ($request->getPut('name') != $result['name']) || ($request->getPut('email') != $result['email']) ||
+                                        ($request->getPut('level') != $result['level']) || ($request->getPut('situation') != $result['situation']) ) ) {
+                                        if ( $request->getPut('name') != $result['name'] ) {
+                                            $users->setName($request->getPut('name'));
                                         } else {
-                                            $user->setLevel($result['level']);
+                                            $users->setName($result['name']);
                                         }
 
-                                        if ( $request->getPut('situation') != $result['situation'] ) {
-                                            $user->setSituation($request->getPut('situation'));
-                                        } else {
-                                            $user->setSituation($result['situation']);
-                                        }
-                                    } else {
-                                        $user->setLevel(4);
-                                        $user->setSituation(1);
-                                    }
-                
-                                    $sql = '
-                                        UPDATE
-                                            users
-                                        SET
-                                            name      = :name,
-                                            email     = :email,
-                                            level     = :level,
-                                            situation = :situation
-                                        WHERE
-                                            id        = :id
-                                    ';
-                
-                                    try {
-                                        $this->db->begin();
-                
-                                        $update = $this->db->execute(
-                                            $sql,
+                                        $sql_verify_email = '
+                                            SELECT
+                                                email
+                                            FROM
+                                                users
+                                            WHERE
+                                                email = :email;
+                                        ';
+
+                                        $query_email = $this->db->query(
+                                            $sql_verify_email,
                                             [
-                                                'name'      => $user->getName(),
-                                                'email'     => $user->getEmail(),
-                                                'level'     => $user->getLevel(),
-                                                'situation' => $user->getSituation(),
-                                                'id'        => $user->getId()
+                                                'email' => $request->getPut('email')
                                             ]
                                         );
-                
-                                        if ( $update ) {
-                                            if ( $result['email'] != $user->getEmail() || $result['level'] != $user->getLevel() || $result['situation'] != $user->getSituation() ) {
-                                                if ( $this->redis->exists($user->getEmail()) ) {
-                                                    $this->redis->del($user->getEmail());
-                                                }
+
+                                        $row = $query_email->numRows();
+                    
+                                        if ( $request->getPut('email') != $result['email'] && $row < 1 ) {
+                                            $users->setEmail($request->getPut('email'));
+                                        } else {
+                                            $users->setEmail($result['email']);
+                                        }
+                                        
+                                        if ( intval($token_array['level']) == 1 || intval($token_array['level']) == 2 ) {
+                                            if ( $request->getPut('level') != $result['level'] ) {
+                                                $users->setLevel($request->getPut('level'));
+                                            } else {
+                                                $users->setLevel($result['level']);
                                             }
-                
-                                            if ( $result['name'] != $user->getName() || $result['email'] != $user->getEmail() ||
-                                                $result['level'] != $user->getLevel() || $result['situation'] != $user->getSituation() ) {
-                                                $contents = [
-                                                    'msg' => 'Usuário atualizado com sucesso!'
-                                                ];
-                        
-                                                $response
-                                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 200)
-                                                    ->send();
+
+                                            if ( $request->getPut('situation') != $result['situation'] ) {
+                                                $users->setSituation($request->getPut('situation'));
+                                            } else {
+                                                $users->setSituation($result['situation']);
+                                            }
+                                        } else {
+                                            $users->setLevel(5);
+                                            $users->setSituation(1);
+                                        }
+                    
+                                        $sql = '
+                                            UPDATE
+                                                users
+                                            SET
+                                                name      = :name,
+                                                email     = :email,
+                                                level     = :level,
+                                                situation = :situation
+                                            WHERE
+                                                id        = :id
+                                        ';
+                    
+                                        try {
+                                            $this->db->begin();
+                    
+                                            $update = $this->db->execute(
+                                                $sql,
+                                                [
+                                                    'name'      => $users->getName(),
+                                                    'email'     => $users->getEmail(),
+                                                    'level'     => $users->getLevel(),
+                                                    'situation' => $users->getSituation(),
+                                                    'id'        => $users->getId()
+                                                ]
+                                            );
+                    
+                                            if ( $update ) {
+                                                if ( $result['email'] != $users->getEmail() || $result['level'] != $users->getLevel() || $result['situation'] != $users->getSituation() ) {
+                                                    if ( $this->redis->exists($user->getEmail()) ) {
+                                                        $this->redis->del($user->getEmail());
+                                                    }
+                                                }
+                    
+                                                if ( $result['name'] != $users->getName() || $result['email'] != $users->getEmail() ||
+                                                    $result['level'] != $users->getLevel() || $result['situation'] != $users->getSituation() ) {
+                                                    $contents = [
+                                                        'msg' => 'Usuário atualizado com sucesso!'
+                                                    ];
+                            
+                                                    $response
+                                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 200)
+                                                        ->send();
+                                                } else {
+                                                    $contents = [
+                                                        'msg' => 'Usuário não foi atualizado, pois os campos estão com valores iguais!'
+                                                    ];
+                            
+                                                    $response
+                                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                                        ->send();
+                                                }
                                             } else {
                                                 $contents = [
-                                                    'msg' => 'Usuário não foi atualizado, pois os campos estão com valores iguais!'
+                                                    'msg' => 'Não foi possível atualizar usuário!'
                                                 ];
                         
                                                 $response
                                                     ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
                                                     ->send();
                                             }
-                                        } else {
-                                            $contents = [
-                                                'msg' => 'Não foi possível atualizar usuário!'
-                                            ];
                     
+                                            $this->db->commit();
+                                        } catch (Exception $error) {
+                                            $this->db->rollback();
+                    
+                                            $contents = [
+                                                'msg' => 'Ocorreu um erro em nosso servidor, tente mais tarde!'
+                                            ];
+                            
                                             $response
-                                                ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                                ->setJsonContent($contents, JSON_PRETTY_PRINT, 500)
                                                 ->send();
                                         }
-                
-                                        $this->db->commit();
-                                    } catch (Exception $error) {
-                                        $this->db->rollback();
-                
+                                    } else {
                                         $contents = [
-                                            'msg' => 'Ocorreu um erro em nosso servidor, tente mais tarde!'
+                                            'msg' => 'Preencha pelo menos um campo com valor diferente do atual!'
                                         ];
                         
                                         $response
-                                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 500)
+                                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
                                             ->send();
                                     }
                                 } else {
                                     $contents = [
-                                        'msg' => 'Preencha pelo menos um campo com valor diferente do atual!'
+                                        'msg' => 'Cargo não encontrado!'
                                     ];
                     
                                     $response
@@ -503,7 +664,7 @@
                                 }
                             } else {
                                 $contents = [
-                                    'msg' => 'Você não possui autorização para fazer alterações nesse usuário!'
+                                    'msg' => 'Você não possui autorização para acessar essa página!'
                                 ];
                 
                                 $response
@@ -521,7 +682,7 @@
                         }
                     } else {
                         $contents = [
-                            'msg' => 'Não é possível acessar essa página, faça login!'
+                            'msg' => 'Sua sessão expirou. Por favor, faça login novamente!'
                         ];
         
                         $response
@@ -546,10 +707,11 @@
                     ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
                     ->send();
             }
+    
         }
 
         public function changePassword($id = NULL) {
-            $user = new User();
+            $users = new Users();
 
             $request = new Request();
 
@@ -576,12 +738,12 @@
                     if ( date(\DateTime::ISO8601) <= $nbf_array ) {
                         if ( intval($token_array['situation']) == 1 ) {
                             if ( empty($id) ) {
-                                $user->setId(intval($token_array['id']));
+                                $users->setId(intval($token_array['id']));
                             } else {
-                                $user->setId($id);
+                                $users->setId($id);
                             }
 
-                            if ( intval($token_array['id']) == $user->getId() || intval($token_array['level']) == 0 ) {
+                            if ( intval($token_array['id']) == $users->getId() || (intval($token_array['level']) == 1 || intval($token_array['level']) == 2) ) {
                                 if ( !empty($request->getPut('password')) ) {
                                     $sql_verify_password = '
                                         SELECT
@@ -589,19 +751,19 @@
                                         FROM
                                             users
                                         WHERE
-                                            id = :id
+                                            id = :id;
                                     ';
     
                                     $query_password = $this->db->query(
                                         $sql_verify_password,
                                         [
-                                            'id' => $user->getId()
+                                            'id' => $users->getId()
                                         ]
                                     );
     
-                                    $data = $query_password->fetch();
+                                    $user = $query_password->fetch();
                                     
-                                    if ( $security->checkHash($request->getPut('password'), $data['password']) ) {
+                                    if ( $security->checkHash($request->getPut('password'), $user['password']) ) {
                                         $contents = [
                                             'msg' => 'Senhas iguais!'
                                         ];
@@ -612,7 +774,7 @@
                                     } else {
                                         $password_hash = $security->hash($request->getPut('password'));
 
-                                        $user->setPassword($password_hash);
+                                        $users->setPassword($password_hash);
                 
                                         $sql_verify_email = '
                                             SELECT
@@ -620,13 +782,13 @@
                                             FROM
                                                 users
                                             WHERE
-                                                id = :id
+                                                id = :id;
                                         ';
                     
                                         $query = $this->db->query(
                                             $sql_verify_email,
                                             [
-                                                'id' => $user->getId()
+                                                'id' => $users->getId()
                                             ]
                                         );
                     
@@ -638,7 +800,7 @@
                                             SET
                                                 password = :password
                                             WHERE
-                                                id = :id
+                                                id = :id;
                                         ';
                     
                                         try {
@@ -647,8 +809,8 @@
                                             $change = $this->db->execute(
                                                 $sql,
                                                 [
-                                                    'id'       => $user->getId(),
-                                                    'password' => $user->getPassword()
+                                                    'id'       => $users->getId(),
+                                                    'password' => $users->getPassword()
                                                 ]
                                             );
                     
@@ -698,11 +860,11 @@
                                 }
                             } else {
                                 $contents = [
-                                    'msg' => 'Você não possui autorização para trocar a senha desse usuário!'
+                                    'msg' => 'Você não possui autorização para acessar essa página!'
                                 ];
                 
                                 $response
-                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
                                     ->send();
                             }
                         } else {
@@ -716,7 +878,7 @@
                         }
                     } else {
                         $contents = [
-                            'msg' => 'Não é possível acessar essa página, faça login!'
+                            'msg' => 'Sua sessão expirou. Por favor, faça login novamente!'
                         ];
         
                         $response
@@ -745,7 +907,7 @@
 
         public function delete($id = NULL)
         {
-            $user = new User();
+            $users = new Users();
             
             $request = new Request();
 
@@ -775,20 +937,20 @@
                                 $user->setId($id);
                             }
 
-                            if ( intval($token_array['id']) == $user->getId() || (intval($token_array['level']) == 0 || intval($token_array['level']) == 2) ) {
+                            if ( intval($token_array['id']) == $users->getId() || (intval($token_array['level']) == 1 || intval($token_array['level']) == 2) ) {
                                 $sql_verify_email = '
                                     SELECT
                                         email
                                     FROM
                                         users
                                     WHERE
-                                        id = :id
+                                        id = :id;
                                 ';
                 
                                 $query = $this->db->query(
                                     $sql_verify_email,
                                     [
-                                        'id' => $user->getId()
+                                        'id' => $users->getId()
                                     ]
                                 );
                                 
@@ -800,7 +962,7 @@
                                         DELETE FROM
                                             users
                                         WHERE
-                                            id = :id
+                                            id = :id;
                                     ';
                     
                                     try {
@@ -809,7 +971,7 @@
                                         $del = $this->db->execute(
                                             $sql,
                                             [
-                                                'id' => $user->getId()
+                                                'id' => $users->getId()
                                             ]
                                         );
                     
@@ -858,11 +1020,11 @@
                                 }
                             } else {
                                 $contents = [
-                                    'msg' => 'Você não possui autorização para deletar esse usuário!'
+                                    'msg' => 'Você não possui autorização para acessar essa página!'
                                 ];
                 
                                 $response
-                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
                                     ->send();
                             }
                         } else {
@@ -876,7 +1038,7 @@
                         }
                     } else {
                         $contents = [
-                            'msg' => 'Não é possível acessar essa página, faça login!'
+                            'msg' => 'Sua sessão expirou. Por favor, faça login novamente!'
                         ];
         
                         $response
@@ -905,7 +1067,7 @@
 
         public function login()
         {
-            $user = new User();
+            $users = new Users();
 
             $request = new Request();
 
@@ -953,7 +1115,7 @@
                         }
                     } else {
                         $contents = [
-                            'msg' => 'Não é possível acessar essa página, faça login!'
+                            'msg' => 'Sua sessão expirou. Por favor, faça login novamente!'
                         ];
         
                         $response
@@ -977,7 +1139,7 @@
                         FROM
                             users
                         WHERE
-                            email = :email
+                            email = :email;
                     ';
     
                     $query_email = $this->db->query(
@@ -990,7 +1152,7 @@
                     $row = $query_email->numRows();
     
                     if ( $row == 1 ) {
-                        $user->setEmail($request->get('email'));
+                        $users->setEmail($request->get('email'));
 
                         $sql_verify_password = '
                             SELECT
@@ -998,70 +1160,70 @@
                             FROM
                                 users
                             WHERE
-                                email = :email
+                                email = :email;
                         ';
     
                         $password_verify = $this->db->query(
                             $sql_verify_password,
                             [
-                                'email' => $user->getEmail()
+                                'email' => $users->getEmail()
                             ]
                         );
     
                         $result = $password_verify->fetch();
 
-                        $user->setPassword($result['password']);
+                        $users->setPassword($result['password']);
     
-                        if ( (!empty($request->get('password')) && !empty($user->getPassword())) &&
-                              $security->checkHash($request->get('password'), $user->getPassword()) ) {
+                        if ( (!empty($request->get('password')) && !empty($users->getPassword())) &&
+                              $security->checkHash($request->get('password'), $users->getPassword()) ) {
                             $sql_verify_situation = '
                                 SELECT
                                     id, level, situation
                                 FROM
                                     users
                                 WHERE
-                                    email = :email
+                                    email = :email;
                             ';
     
                             $verify_situation = $this->db->query(
                                 $sql_verify_situation,
                                 [
-                                    'email' => $user->getEmail()
+                                    'email' => $users->getEmail()
                                 ]
                             );
     
                             $result = $verify_situation->fetch();
 
-                            $user->setId($result['id']);
-                            $user->setLevel($result['level']);
-                            $user->setSituation($result['situation']);
+                            $users->setId($result['id']);
+                            $users->setLevel($result['level']);
+                            $users->setSituation($result['situation']);
     
-                            if ( $user->getSituation() == 1 ) {
-                                $key = base64_encode($_ENV['SECRET_KEY'] . $user->getEmail());
+                            if ( $users->getSituation() == 1 ) {
+                                $key = base64_encode($_ENV['SECRET_KEY'] . $users->getEmail());
 
                                 $payload = array(
                                     "iss"       => $_SERVER['HOST_NAME'],
                                     "aud"       => $_ENV['APP_URL'],
                                     "iat"       => date(\DateTime::ISO8601),
                                     "nbf"       => date(\DateTime::ISO8601, strtotime('+3 minute')),
-                                    'id'        => $user->getId(),
-                                    'level'     => $user->getLevel(),
-                                    'situation' => $user->getSituation()
+                                    'id'        => $users->getId(),
+                                    'level'     => $users->getLevel(),
+                                    'situation' => $users->getSituation()
                                 );
                                 
                                 try {
                                     $token = JWT::encode($payload, $key, 'HS512');
     
-                                    if ( $this->redis->exists($user->getEmail()) ) {
-                                        $this->redis->del($user->getEmail());
+                                    if ( $this->redis->exists($users->getEmail()) ) {
+                                        $this->redis->del($users->getEmail());
                                     }
 
                                     if ( empty($_SESSION['user']) ) {
                                         unset($_SESSION['user']);
                                     }
         
-                                    if ( $this->redis->set($user->getEmail(), $token) ) {
-                                        $_SESSION['user'] = $user->getEmail();
+                                    if ( $this->redis->set($users->getEmail(), $token) ) {
+                                        $_SESSION['user'] = $users->getEmail();
 
                                         $contents = [
                                             'token' => $token
@@ -1076,7 +1238,7 @@
                                         ];
                         
                                         $response
-                                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 500)
+                                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
                                             ->send();
                                     }
                                 } catch (UnexpectedValueException $error) {
@@ -1085,12 +1247,12 @@
                                     ];
                     
                                     $response
-                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 500)
                                         ->send();
                                 }
                             } else {
                                 $contents = [
-                                    'msg' => 'Usuário desativado, favor contatar departamento de RH!'
+                                    'msg' => 'Seu usuário não está ativo, contate um administrador ou RH!'
                                 ];
                 
                                 $response
@@ -1103,7 +1265,7 @@
                             ];
             
                             $response
-                                ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
                                 ->send();
                         }
                     } else {
@@ -1117,7 +1279,7 @@
                     }
                 } else {
                     $contents = [
-                        'msg' => 'Dados não preenchidos!'
+                        'msg' => 'E-mail e/ou senha não preenchido(s)!'
                     ];
     
                     $response
@@ -1151,23 +1313,33 @@
 
                     if ( date(\DateTime::ISO8601) <= $nbf_array ) {
                         if ( intval($token_array['situation']) == 1 ) {
-                            if ( $this->redis->del($_SESSION['user']) ) {
-                                session_destroy();
-            
+                            try {
+                                if ( $this->redis->del($_SESSION['user']) ) {
+                                    session_destroy();
+                
+                                    $contents = [
+                                        'msg' => 'Sessão encerrada com sucesso!'
+                                    ];
+                    
+                                    $response
+                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 200)
+                                        ->send();
+                                } else {
+                                    $contents = [
+                                        'msg' => 'Não foi possível encerrar sessão!'
+                                    ];
+                    
+                                    $response
+                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                        ->send();
+                                }
+                            } catch (Exception $error) {
                                 $contents = [
-                                    'msg' => 'Sessão encerrada com sucesso!'
+                                    'msg' => 'Ocorreu um erro em nosso servidor, tente mais tarde!'
                                 ];
                 
                                 $response
-                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 200)
-                                    ->send();
-                            } else {
-                                $contents = [
-                                    'msg' => 'Não foi possível encerrar sessão!'
-                                ];
-                
-                                $response
-                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 500)
                                     ->send();
                             }
                         } else {
@@ -1181,7 +1353,7 @@
                         }
                     } else {
                         $contents = [
-                            'msg' => 'Não é possível acessar essa página, faça login!'
+                            'msg' => 'Sua sessão expirou. Por favor, faça login novamente!'
                         ];
         
                         $response
