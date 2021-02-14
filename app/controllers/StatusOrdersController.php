@@ -69,11 +69,11 @@
                                 }
                             } else {
                                 $contents = [
-                                    'msg' => 'Você não possui autorização para visualizar status de pedidos!'
+                                    'msg' => 'Você não possui autorização para acessar essa página!'
                                 ];
                 
                                 $response
-                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
                                     ->send();
                             }
                         } else {
@@ -148,7 +148,7 @@
                                         FROM
                                             status_orders
                                         WHERE
-                                            name = :name
+                                            name = :name;
                                     ';
 
                                     $query = $this->db->query(
@@ -230,11 +230,11 @@
                                 }
                             } else {
                                 $contents = [
-                                    'msg' => 'Você não possui autorização para cadastrar status de pedidos!'
+                                    'msg' => 'Você não possui autorização para acessar essa página!'
                                 ];
                 
                                 $response
-                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
                                     ->send();
                             }
                         } else {
@@ -312,7 +312,7 @@
                                         FROM
                                             status_orders
                                         WHERE
-                                            name = :name
+                                            name = :name;
                                     ';
 
                                     $query = $this->db->query(
@@ -331,7 +331,7 @@
                                             SET
                                                 name = :name
                                             WHERE
-                                                id = :id
+                                                id = :id;
                                         ';
 
                                         $sql_order = '
@@ -340,7 +340,7 @@
                                             SET
                                                 status_order = :status_order
                                             WHERE
-                                                status = :status
+                                                status = :status;
                                         ';
 
                                         try {
@@ -422,11 +422,11 @@
                                 }
                             } else {
                                 $contents = [
-                                    'msg' => 'Você não possui autorização para visualizar status de pedidos!'
+                                    'msg' => 'Você não possui autorização para acessar essa página!'
                                 ];
                 
                                 $response
-                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
                                     ->send();
                             }
                         } else {
@@ -500,7 +500,7 @@
                                     FROM
                                         status_orders
                                     WHERE
-                                        id = :id
+                                        id = :id;
                                 ';
 
                                 $query = $this->db->query(
@@ -519,7 +519,7 @@
                                         DELETE FROM
                                             status_orders
                                         WHERE
-                                            id = :id
+                                            id = :id;
                                     ';
 
                                     $sql_order = '
@@ -528,7 +528,7 @@
                                         SET
                                             status_order = :status_order
                                         WHERE
-                                            status = :status
+                                            status = :status;
                                     ';
 
                                     try {
@@ -601,11 +601,11 @@
                                 }
                             } else {
                                 $contents = [
-                                    'msg' => 'Você não possui autorização para visualizar status de pedidos!'
+                                    'msg' => 'Você não possui autorização para acessar essa página!'
                                 ];
                 
                                 $response
-                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
                                     ->send();
                             }
                         } else {
