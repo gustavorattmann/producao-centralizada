@@ -160,16 +160,16 @@
 
                             if ( intval($token_array['id']) == $users->getId() || (intval($token_array['level']) == 1 || intval($token_array['level']) == 2) ) {
                                 $sql = '
-                                SELECT
-                                    u.id AS id, u.name AS name, u.email AS email, r.name AS role, u.situation AS situation
-                                FROM
-                                    users u
-                                LEFT JOIN
-                                    roles r
-                                ON
-                                    u.level = r.id
-                                WHERE
-                                    u.id = :id;
+                                    SELECT
+                                        u.id AS id, u.name AS name, u.email AS email, r.name AS role, u.situation AS situation
+                                    FROM
+                                        users u
+                                    LEFT JOIN
+                                        roles r
+                                    ON
+                                        u.level = r.id
+                                    WHERE
+                                        u.id = :id;
                                 ';
             
                                 $query = $this->db->query(
@@ -203,6 +203,138 @@
                                 } else {
                                     $contents = [
                                         'msg' => 'Nenhum usuário encontrado!'
+                                    ];
+                    
+                                    $response
+                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                        ->send();
+                                }
+                            } else {
+                                $contents = [
+                                    'msg' => 'Você não possui autorização para acessar essa página!'
+                                ];
+                
+                                $response
+                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
+                                    ->send();
+                            }
+                        } else {
+                            $contents = [
+                                'msg' => 'Seu usuário não está ativo, contate um administrador ou RH!'
+                            ];
+            
+                            $response
+                                ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
+                                ->send();
+                        }
+                    } else {
+                        $contents = [
+                            'msg' => 'Sua sessão expirou. Por favor, faça login novamente!'
+                        ];
+        
+                        $response
+                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
+                            ->send();
+                    }
+                } else {
+                    $contents = [
+                        'msg' => 'Token inválido!'
+                    ];
+    
+                    $response
+                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
+                        ->send();
+                }
+            } else {
+                $contents = [
+                    'msg' => 'Seu usuário não está logado. Por favor, faça login!'
+                ];
+
+                $response
+                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
+                    ->send();
+            }
+        }
+
+        public function search()
+        {
+            $request = new Request();
+
+            $response = new Response();
+            
+            session_start();
+
+            if ( !empty($_SESSION['user']) && $this->redis->exists($_SESSION['user']) ) {
+                $bearerToken = $request->getHeaders()['Authorization'];
+
+                $bearerToken = str_replace('Bearer ', '', $bearerToken);
+
+                if ( !empty($bearerToken) && $bearerToken == $this->redis->get($_SESSION['user']) ) {
+                    $key = base64_encode($_ENV['SECRET_KEY'] . $_SESSION['user']);
+
+                    JWT::$leeway = 60;
+                    $token = JWT::decode($bearerToken, $key, array('HS512'));
+
+                    $token_array = (array) $token;
+                    $nbf_array = (array) $token_array['nbf'];
+
+                    if ( date(\DateTime::ISO8601) <= $nbf_array ) {
+                        if ( intval($token_array['situation']) == 1 ) {
+                            if ( intval($token_array['level']) == 1 || intval($token_array['level']) == 2 ) {
+                                if ( !empty($request->get('value')) ) {
+                                    $sql = '
+                                        SELECT
+                                            u.id AS id, u.name AS name, u.email AS email, r.name AS role, u.situation AS situation
+                                        FROM
+                                            users u
+                                        LEFT JOIN
+                                            roles r
+                                        ON
+                                            u.level = r.id
+                                        WHERE
+                                            u.name LIKE :pesquisa OR u.email LIKE :pesquisa;
+                                    ';
+                
+                                    $query = $this->db->query(
+                                        $sql,
+                                        [
+                                            'pesquisa' => '%' . $request->get('value') . '%'
+                                        ]
+                                    );
+
+                                    $row = $query->numRows();
+                                    $user = $query->fetch();
+
+                                    if ( $row == 1 ) {
+                                        if ( $user['role'] == NULL ) {
+                                            $user['role'] = '';
+                                        }
+
+                                        $contents = [
+                                            'user' => [
+                                                'id'        => $user['id'],
+                                                'name'      => $user['name'],
+                                                'email'     => $user['email'],
+                                                'role'      => $user['role'],
+                                                'situation' => $user['situation']
+                                            ]
+                                        ];
+
+                                        $response
+                                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 200)
+                                            ->send();
+                                    } else {
+                                        $contents = [
+                                            'msg' => 'Nenhum usuário encontrado!'
+                                        ];
+                        
+                                        $response
+                                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                            ->send();
+                                    }
+                                } else {
+                                    $contents = [
+                                        'msg' => 'Insira um valor para pesquisa!'
                                     ];
                     
                                     $response
