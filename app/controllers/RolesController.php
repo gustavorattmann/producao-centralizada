@@ -148,7 +148,7 @@
                                         FROM
                                             roles
                                         WHERE
-                                            name = :name
+                                            name = :name;
                                     ';
 
                                     $query = $this->db->query(
@@ -473,7 +473,7 @@
                                     FROM
                                         roles
                                     WHERE
-                                        id = :id
+                                        id = :id;
                                 ';
 
                                 $query = $this->db->query(
