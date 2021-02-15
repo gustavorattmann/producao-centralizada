@@ -6,7 +6,7 @@
 
     class RawMaterials extends Model
     {
-        private $id, $name, $stock;
+        private $id, $name, $stock, $situation;
 
         public function getId()
         {
@@ -23,6 +23,10 @@
             return $this->stock;
         }
 
+        public function getSituation() {
+            return $this->situation;
+        }
+
         public function setId(int $id)
         {
             $this->id = $id;
@@ -36,6 +40,10 @@
         public function setStock($stock)
         {
             $this->stock = $stock;
+        }
+
+        public function setSituation(int $situation) {
+            $this->situation = $situation;
         }
     }
 

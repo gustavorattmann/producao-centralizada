@@ -14,6 +14,7 @@
         private $quantity_product_requested;
         private $quantity_raw_material_limit;
         private $status_order;
+        private $situation;
         private $date_initial;
         private $date_final;
 
@@ -55,6 +56,10 @@
         public function getStatusOrder()
         {
             return $this->status_order;
+        }
+
+        public function getSituation() {
+            return $this->situation;
         }
 
         public function getDateInitial()
@@ -105,6 +110,10 @@
         public function setStatusOrder(int $status_order)
         {
             $this->status_order = $status_order;
+        }
+
+        public function setSituation(int $situation) {
+            $this->situation = $situation;
         }
 
         public function setDateInitial($date_initial)

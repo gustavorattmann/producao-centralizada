@@ -6,7 +6,7 @@
 
     class Products extends Model
     {
-        private $id, $name, $category;
+        private $id, $name, $category, $situation;
 
         public function getId()
         {
@@ -23,6 +23,10 @@
             return $this->category;
         }
 
+        public function getSituation() {
+            return $this->situation;
+        }
+
         public function setId(int $id)
         {
             $this->id = $id;
@@ -36,6 +40,10 @@
         public function setCategory($category)
         {
             $this->category = $category;
+        }
+        
+        public function setSituation(int $situation) {
+            $this->situation = $situation;
         }
     }
 

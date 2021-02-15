@@ -13,6 +13,7 @@
         private $quantity_raw_material_used;
         private $quantity_raw_material_losted;
         private $justification;
+        private $situation;
         private $date_initial;
         private $date_final;
 
@@ -49,6 +50,10 @@
         public function getJustification()
         {
             return $this->justification;
+        }
+
+        public function getSituation() {
+            return $this->situation;
         }
 
         public function getDateInitial()
@@ -94,6 +99,10 @@
         public function setJustification($justification)
         {
             $this->justification = $justification;
+        }
+
+        public function setSituation(int $situation) {
+            $this->situation = $situation;
         }
 
         public function setDateInitial($date_initial)
