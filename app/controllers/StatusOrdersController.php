@@ -49,8 +49,9 @@
                                     foreach ($result as $key => $status_order) {
                                         $contents[$key] = [
                                             'status_order' => [
-                                                'id'   => $status_order['id'],
-                                                'name' => $status_order['name']
+                                                'id'        => $status_order['id'],
+                                                'name'      => $status_order['name'],
+                                                'situation' => $status_order['situation']
                                             ]
                                         ];
                                     }
@@ -144,7 +145,7 @@
                                 if ( !empty($request->get('name')) ) {
                                     $sql_verify_status_order = '
                                         SELECT
-                                            name
+                                            *
                                         FROM
                                             status_orders
                                         WHERE
@@ -162,12 +163,13 @@
 
                                     if ( $verify_status_order_exist < 1 ) {
                                         $status_orders->setName($request->get('name'));
+                                        $status_order->setSituation(1);
 
                                         $sql = '
                                             INSERT INTO status_orders
-                                                (name)
+                                                (name, situation)
                                             VALUES
-                                                (:name);
+                                                (:name, :situation);
                                         ';
 
                                         try {
@@ -176,7 +178,8 @@
                                             $success = $this->db->query(
                                                 $sql,
                                                 [
-                                                    'name' => $status_orders->getName()
+                                                    'name'      => $status_orders->getName(),
+                                                    'situation' => $status_orders->getSituation()
                                                 ]
                                             );
 
@@ -225,7 +228,7 @@
                                     ];
                     
                                     $response
-                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
+                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
                                         ->send();
                                 }
                             } else {
@@ -302,13 +305,10 @@
                     if ( date(\DateTime::ISO8601) <= $nbf_array ) {
                         if ( intval($token_array['situation']) == 1 ) {
                             if ( intval($token_array['level']) == 1 || intval($token_array['level']) == 3 ) {
-                                if ( !empty($request->getPut('name')) ) {
-                                    $status_orders->setId($id);
-                                    $status_orders->setName($request->getPut('name'));
-
+                                if ( !empty($request->getPut('name')) && !empty($request->getPut('situation')) ) {
                                     $sql_verify_status_order = '
                                         SELECT
-                                            name
+                                            name, situation
                                         FROM
                                             status_orders
                                         WHERE
@@ -322,25 +322,32 @@
                                         ]
                                     );
 
+                                    $row = $query->numRows();
                                     $result = $query->fetch();
 
-                                    if ( $status_orders->getName() != $result['name'] ) {
+                                    if ( $row == 1 ) {
+                                        $status_orders->setId($id);
+                                        
+                                        if ( $request->getPut('name') != $result['name'] ) {
+                                            $status_orders->setName($request->getPut('name'));
+                                        } else {
+                                            $status_orders->setName($result['name']);
+                                        }
+
+                                        if ( intval($request->getPut('situation')) != $result['situation'] ) {
+                                            $status_orders->setSituation(intval($request->getPut('situation')));
+                                        } else {
+                                            $status_orders->setSituation($result['situation']);
+                                        }
+
                                         $sql = '
                                             UPDATE
                                                 status_orders
                                             SET
-                                                name = :name
+                                                name = :name,
+                                                situation = :situation
                                             WHERE
                                                 id = :id;
-                                        ';
-
-                                        $sql_order = '
-                                            UPDATE
-                                                orders
-                                            SET
-                                                status_order = :status_order
-                                            WHERE
-                                                status = :status;
                                         ';
 
                                         try {
@@ -349,37 +356,20 @@
                                             $update = $this->db->execute(
                                                 $sql,
                                                 [
-                                                    'id'   => $status_order->getId(),
-                                                    'name' => $status_orders->getName()
+                                                    'id'        => $status_order->getId(),
+                                                    'name'      => $status_orders->getName(),
+                                                    'situation' => $status_orders->getSituation()
                                                 ]
                                             );
 
                                             if ( $update ) {
-                                                $update_status = $this->db->execute(
-                                                    $sql_order,
-                                                    [
-                                                        'status'       => $status_orders->getId(),
-                                                        'status_order' => ''
-                                                    ]
-                                                );
-    
-                                                if ( $update_status ) {
-                                                    $contents = [
-                                                        'msg' => 'Status de pedidos alterado com sucesso!'
-                                                    ];
-                                    
-                                                    $response
-                                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 201)
-                                                        ->send();
-                                                } else {
-                                                    $contents = [
-                                                        'msg' => 'Não foi possível remover status dos pedidos!'
-                                                    ];
-                            
-                                                    $response
-                                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
-                                                        ->send();
-                                                }
+                                                $contents = [
+                                                    'msg' => 'Status de pedidos alterado com sucesso!'
+                                                ];
+                                
+                                                $response
+                                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 201)
+                                                    ->send();
                                             } else {
                                                 $contents = [
                                                     'msg' => 'Falha na alteração de status de pedidos!'
@@ -404,7 +394,7 @@
                                         }
                                     } else {
                                         $contents = [
-                                            'msg' => 'Preencha um nome diferente do atual!'
+                                            'msg' => 'Status de pedido não encontrado!'
                                         ];
                         
                                         $response
@@ -413,7 +403,7 @@
                                     }
                                 } else {
                                     $contents = [
-                                        'msg' => 'Preencha um nome para o status de pedidos!'
+                                        'msg' => 'Dados incompletos!'
                                     ];
                     
                                     $response
