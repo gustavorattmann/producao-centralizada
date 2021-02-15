@@ -49,8 +49,9 @@
                                     foreach ($result as $key => $category) {
                                         $contents[$key] = [
                                             'category' => [
-                                                'id'   => $category['id'],
-                                                'name' => $category['name']
+                                                'id'        => $category['id'],
+                                                'name'      => $category['name'],
+                                                'situation' => $category['situation']
                                             ]
                                         ];
                                     }
@@ -144,7 +145,7 @@
                                 if ( !empty($request->get('name')) ) {
                                     $sql_verify_category = '
                                         SELECT
-                                            name
+                                            situation
                                         FROM
                                             category
                                         WHERE
@@ -158,16 +159,17 @@
                                         ]
                                     );
 
-                                    $verify_category_exists = $query->numRows();
+                                    $verify_category_exist = $query->numRows();
 
-                                    if ( $verify_category_exists < 1 ) {
+                                    if ( $verify_category_exist < 1 ) {
                                         $category->setName($request->get('name'));
+                                        $category->setSituation(1);
 
                                         $sql = '
                                             INSERT INTO category
-                                                (name)
+                                                (name, situation)
                                             VALUES
-                                                (:name);
+                                                (:name, :situation);
                                         ';
 
                                         try {
@@ -176,7 +178,8 @@
                                             $success = $this->db->query(
                                                 $sql,
                                                 [
-                                                    'name' => $category->getName()
+                                                    'name'      => $category->getName(),
+                                                    'situation' => $category->getSituation()
                                                 ]
                                             );
 
@@ -302,34 +305,47 @@
                     if ( date(\DateTime::ISO8601) <= $nbf_array ) {
                         if ( intval($token_array['situation']) == 1 ) {
                             if ( intval($token_array['level']) == 1 || intval($token_array['level']) == 3 ) {
-                                if ( !empty($request->getPut('name')) ) {
-                                    $category->setId($id);
-                                    $category->setName($request->getPut('name'));
-
+                                if ( !empty($request->getPut('name')) && !empty($request->getPut('situation')) ) {
                                     $sql_verify_category = '
                                         SELECT
-                                            name
+                                            name, situation
                                         FROM
                                             category
                                         WHERE
-                                            name = :name
+                                            id = :id
                                     ';
 
                                     $query = $this->db->query(
                                         $sql_verify_category,
                                         [
-                                            'name' => $category->getName()
+                                            'id' => $id
                                         ]
                                     );
 
+                                    $row = $query->numRows();
                                     $result = $query->fetch();
 
-                                    if ( $category->getName() != $result['name'] ) {
+                                    if ( $row == 1 ) {
+                                        $category->setId($id);
+                                        
+                                        if ( $request->getPut('name') != $result['name'] ) {
+                                            $category->setName($request->getPut('name'));
+                                        } else {
+                                            $category->setName($result['name']);
+                                        }
+
+                                        if ( intval($request->getPut('situation')) != $result['situation'] ) {
+                                            $category->setSituation(intval($request->getPut('situation')));
+                                        } else {
+                                            $category->setSituation($result['situation']);
+                                        }
+
                                         $sql = '
                                             UPDATE
                                                 category
                                             SET
-                                                name = :name
+                                                name = :name,
+                                                situation = :situation
                                             WHERE
                                                 id = :id
                                         ';
@@ -340,8 +356,9 @@
                                             $update = $this->db->execute(
                                                 $sql,
                                                 [
-                                                    'id'   => $category->getId(),
-                                                    'name' => $category->getName()
+                                                    'id'        => $category->getId(),
+                                                    'name'      => $category->getName(),
+                                                    'situation' => $category->getSituation()
                                                 ]
                                             );
 
@@ -375,14 +392,6 @@
                                                 ->setJsonContent($contents, JSON_PRETTY_PRINT, 500)
                                                 ->send();
                                         }
-                                    } else {
-                                        $contents = [
-                                            'msg' => 'Preencha um nome diferente do atual!'
-                                        ];
-                        
-                                        $response
-                                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
-                                            ->send();
                                     }
                                 } else {
                                     $contents = [
