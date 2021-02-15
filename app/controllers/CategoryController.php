@@ -34,7 +34,7 @@
 
                     if ( date(\DateTime::ISO8601) <= $nbf_array ) {
                         if ( intval($token_array['situation']) == 1 ) {
-                            if ( intval($token_array['level']) == 0 || intval($token_array['level']) == 1 ) {
+                            if ( intval($token_array['level']) == 1 || intval($token_array['level']) == 3 ) {
                                 $sql = '
                                     SELECT
                                         *
@@ -69,11 +69,11 @@
                                 }
                             } else {
                                 $contents = [
-                                    'msg' => 'Você não possui autorização para visualizar as categorias!'
+                                    'msg' => 'Você não possui autorização para acessar essa página!'
                                 ];
                 
                                 $response
-                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
                                     ->send();
                             }
                         } else {
@@ -87,7 +87,7 @@
                         }
                     } else {
                         $contents = [
-                            'msg' => 'Não é possível acessar essa página, faça login!'
+                            'msg' => 'Sua sessão expirou. Por favor, faça login novamente!'
                         ];
         
                         $response
@@ -140,7 +140,7 @@
 
                     if ( date(\DateTime::ISO8601) <= $nbf_array ) {
                         if ( intval($token_array['situation']) == 1 ) {
-                            if ( intval($token_array['level']) == 0 || intval($token_array['level']) == 1 ) {
+                            if ( intval($token_array['level']) == 1 || intval($token_array['level']) == 3 ) {
                                 if ( !empty($request->get('name')) ) {
                                     $sql_verify_category = '
                                         SELECT
@@ -230,11 +230,11 @@
                                 }
                             } else {
                                 $contents = [
-                                    'msg' => 'Você não possui autorização para fazer alterações nesse usuário!'
+                                    'msg' => 'Você não possui autorização para acessar essa página!'
                                 ];
                 
                                 $response
-                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
                                     ->send();
                             }
                         } else {
@@ -248,7 +248,7 @@
                         }
                     } else {
                         $contents = [
-                            'msg' => 'Não é possível acessar essa página, faça login!'
+                            'msg' => 'Sua sessão expirou. Por favor, faça login novamente!'
                         ];
         
                         $response
@@ -301,7 +301,7 @@
 
                     if ( date(\DateTime::ISO8601) <= $nbf_array ) {
                         if ( intval($token_array['situation']) == 1 ) {
-                            if ( intval($token_array['level']) == 0 || intval($token_array['level']) == 1 ) {
+                            if ( intval($token_array['level']) == 1 || intval($token_array['level']) == 3 ) {
                                 if ( !empty($request->getPut('name')) ) {
                                     $category->setId($id);
                                     $category->setName($request->getPut('name'));
@@ -395,11 +395,11 @@
                                 }
                             } else {
                                 $contents = [
-                                    'msg' => 'Você não possui autorização para visualizar as categorias!'
+                                    'msg' => 'Você não possui autorização para acessar essa página!'
                                 ];
                 
                                 $response
-                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
                                     ->send();
                             }
                         } else {
@@ -413,7 +413,7 @@
                         }
                     } else {
                         $contents = [
-                            'msg' => 'Não é possível acessar essa página, faça login!'
+                            'msg' => 'Sua sessão expirou. Por favor, faça login novamente!'
                         ];
         
                         $response
@@ -466,7 +466,7 @@
 
                     if ( date(\DateTime::ISO8601) <= $nbf_array ) {
                         if ( intval($token_array['situation']) == 1 ) {
-                            if ( intval($token_array['level']) == 0 || intval($token_array['level']) == 1 ) {
+                            if ( intval($token_array['level']) == 1 || intval($token_array['level']) == 3 ) {
                                 $sql_verify_category = '
                                     SELECT
                                         *
@@ -560,11 +560,11 @@
                                 }
                             } else {
                                 $contents = [
-                                    'msg' => 'Você não possui autorização para visualizar as categorias!'
+                                    'msg' => 'Você não possui autorização para acessar essa página!'
                                 ];
                 
                                 $response
-                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
                                     ->send();
                             }
                         } else {
@@ -578,7 +578,7 @@
                         }
                     } else {
                         $contents = [
-                            'msg' => 'Não é possível acessar essa página, faça login!'
+                            'msg' => 'Sua sessão expirou. Por favor, faça login novamente!'
                         ];
         
                         $response
