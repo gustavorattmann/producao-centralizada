@@ -34,18 +34,21 @@
 
                     if ( date(\DateTime::ISO8601) <= $nbf_array ) {
                         if ( intval($token_array['situation']) == 1 ) {
-                            if ( intval($token_array['level']) == 0 || intval($token_array['level']) == 1 ) {
+                            if ( intval($token_array['level']) == 1 || intval($token_array['level']) == 3 ) {
                                 $sql = '
                                     SELECT
                                         o.id AS id,
-                                        u.name AS solicitor,
+                                        u.solicitor AS solicitor,
+                                        u.designated AS designated,
                                         p.name AS product,
                                         c.name AS category,
                                         r.name AS raw_material,
                                         r.stock AS stock,
                                         o.quantity_product_requested AS quantity_product_requested,
                                         o.quantity_raw_material_limit AS quantity_raw_material_limit,
-                                        o.date AS date
+                                        o.status_order AS status,
+                                        o.date_initial AS date_created,
+                                        o.date_final AS date_updated
                                     FROM
                                         orders o
                                     INNER JOIN
@@ -61,27 +64,37 @@
                                     ON
                                         o.raw_material = r.id
                                     INNER JOIN
+                                        status_orders so
+                                    ON
+                                        o.status_order = so.id
+                                    INNER JOIN
                                         category c
                                     ON
                                         p.category = c.id
-                                    ORDER BY o.date DESC;
+                                    ORDER BY o.date_inital DESC;
                                 ';
 
                                 $orders = $this->db->fetchAll($sql);
 
                                 if ( !empty($orders) ) {
                                     foreach ($orders as $key => $order) {
+                                        $date_created = new \DateTime($order['date_created']);
+                                        $date_updated = new \DateTime($order['date_updated']);
+
                                         $contents[$key] = [
                                             'order' => [
                                                 'id'                          => $order['id'],
                                                 'solicitor'                   => $order['solicitor'],
+                                                'designated'                  => $order['designated'],
                                                 'product'                     => $order['product'],
                                                 'category'                    => $order['category'],
                                                 'raw_material'                => $order['raw_material'],
                                                 'stock'                       => $order['stock'],
                                                 'quantity_product_requested'  => $order['quantity_product_requested'],
                                                 'quantity_raw_material_limit' => $order['quantity_raw_material_limit'],
-                                                'date'                        => $order['date']
+                                                'status'                      => $order['status'],
+                                                'date_created'                => $date_created->format('d/m/Y H:i:s'),
+                                                'date_updated'                => $date_updated->format('d/m/Y H:i:s')
                                             ]
                                         ];
                                     }
@@ -104,7 +117,7 @@
                                 ];
                 
                                 $response
-                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
                                     ->send();
                             }
                         } else {
@@ -118,7 +131,7 @@
                         }
                     } else {
                         $contents = [
-                            'msg' => 'Não é possível acessar essa página, faça login!'
+                            'msg' => 'Sua sessão expirou. Por favor, faça login novamente!'
                         ];
         
                         $response
@@ -147,7 +160,7 @@
 
         public function view($id)
         {
-            $order = New Orders();
+            $orders = new Orders();
             
             $request = new Request();
 
@@ -171,20 +184,23 @@
 
                     if ( date(\DateTime::ISO8601) <= $nbf_array ) {
                         if ( intval($token_array['situation']) == 1 ) {
-                            if ( intval($token_array['level']) == 0 || intval($token_array['level']) == 1 ) {
-                                $order->setId($id);
+                            if ( intval($token_array['level']) == 1 || intval($token_array['level']) == 3 ) {
+                                $orders->setId($id);
 
                                 $sql = '
                                     SELECT
                                         o.id AS id,
-                                        u.name AS solicitor,
+                                        u.solicitor AS solicitor,
+                                        u.designated AS designated,
                                         p.name AS product,
                                         c.name AS category,
                                         r.name AS raw_material,
                                         r.stock AS stock,
                                         o.quantity_product_requested AS quantity_product_requested,
                                         o.quantity_raw_material_limit AS quantity_raw_material_limit,
-                                        o.date AS date
+                                        o.status_order AS status,
+                                        o.date_initial AS date_created,
+                                        o.date_final AS date_updated
                                     FROM
                                         orders o
                                     INNER JOIN
@@ -200,18 +216,22 @@
                                     ON
                                         o.raw_material = r.id
                                     INNER JOIN
+                                        status_orders so
+                                    ON
+                                        o.status_order = so.id
+                                    INNER JOIN
                                         category c
                                     ON
                                         p.category = c.id
                                     WHERE
                                         o.id = :id
-                                    ORDER BY o.date DESC;
+                                    ORDER BY o.date_initial DESC;
                                 ';
 
                                 $query = $this->db->query(
                                     $sql,
                                     [
-                                        'id' => $order->getId()
+                                        'id' => $orders->getId()
                                     ]
                                 );
 
@@ -219,17 +239,23 @@
                                 $result = $query->fetch();
 
                                 if ( $row == 1 ) {
+                                    $date_created = new \DateTime($result['date_created']);
+                                    $date_updated = new \DateTime($result['date_updated']);
+
                                     $contents = [
                                         'order' => [
                                             'id'                          => $result['id'],
                                             'solicitor'                   => $result['solicitor'],
+                                            'designated'                  => $result['designated'],
                                             'product'                     => $result['product'],
                                             'category'                    => $result['category'],
                                             'raw_material'                => $result['raw_material'],
                                             'stock'                       => $result['stock'],
                                             'quantity_product_requested'  => $result['quantity_product_requested'],
                                             'quantity_raw_material_limit' => $result['quantity_raw_material_limit'],
-                                            'date'                        => $result['date']
+                                            'status'                      => $result['status'],
+                                            'date_created'                => $date_created->format('d/m/Y H:i:s'),
+                                            'date_updated'                => $date_updated->format('d/m/Y H:i:s')
                                         ]
                                     ];
 
@@ -251,7 +277,7 @@
                                 ];
                 
                                 $response
-                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
                                     ->send();
                             }
                         } else {
@@ -265,7 +291,7 @@
                         }
                     } else {
                         $contents = [
-                            'msg' => 'Não é possível acessar essa página, faça login!'
+                            'msg' => 'Sua sessão expirou. Por favor, faça login novamente!'
                         ];
         
                         $response
@@ -294,7 +320,7 @@
 
         public function register()
         {
-            $order = New Orders();
+            $orders = new Orders();
             
             $request = new Request();
 
@@ -318,113 +344,186 @@
 
                     if ( date(\DateTime::ISO8601) <= $nbf_array ) {
                         if ( intval($token_array['situation']) == 1 ) {
-                            if ( intval($token_array['level']) == 0 || intval($token_array['level']) == 1 ) {
-                                if ( !empty($request->get('product')) && !empty($request->get('raw_material')) &&
+                            if ( intval($token_array['level']) == 1 || intval($token_array['level']) == 3 ) {
+                                if ( !empty($request->get('designated')) && !empty($request->get('product')) &&
+                                     !empty($request->get('raw_material')) &&
                                      !empty($request->get('quantity_product_requested')) &&
-                                     !empty($request->get('quantity_raw_material_limit')) ) {
-                                    $sql_verify_product = '
+                                     !empty($request->get('quantity_raw_material_limit')) &&
+                                     !empty($request->get('status')) ) {
+                                    $sql_verify_designated = '
                                         SELECT
                                             *
                                         FROM
-                                            products
+                                            users
                                         WHERE
                                             id = :id;
                                     ';
 
-                                    $query_verify_product = $this->db->query(
-                                        $sql_verify_product,
+                                    $query_verify_designated = $this->db->query(
+                                        $sql_verify_designated,
                                         [
-                                            'id' => intval($request->get('product'))
+                                            'id' => intval($request->get('designated'))
                                         ]
                                     );
 
-                                    $row_product = $query_verify_product->numRows();
+                                    $row_designated = $query_verify_designated->numRows();
                                     
-                                    if ( $row_product == 1 ) {
-                                        $sql_verify_raw_material = '
+                                    if ( $row_designated == 1 ) {
+                                        $sql_verify_status_order = '
                                             SELECT
-                                                stock
+                                                *
                                             FROM
-                                                raw_materials
+                                                status_orders
                                             WHERE
                                                 id = :id;
                                         ';
 
-                                        $query_verify_raw_material = $this->db->query(
-                                            $sql_verify_raw_material,
+                                        $query_verify_status_order = $this->db->query(
+                                            $sql_verify_status_order,
                                             [
-                                                'id' => intval($request->get('raw_material'))
+                                                'id' => intval($request->get('status'))
                                             ]
                                         );
 
-                                        $result = $query_verify_raw_material->fetch();
+                                        $row_status_order = $query_verify_status_order->numRows();
+                                        
+                                        if ( $row_status_order == 1 ) {
+                                            $sql_verify_product = '
+                                                SELECT
+                                                    *
+                                                FROM
+                                                    products
+                                                WHERE
+                                                    id = :id;
+                                            ';
 
-                                        if ( !empty($result) ) {
-                                            if ( intval($request->get('quantity_raw_material_limit')) <= $result['stock'] ) {
-                                                $date = new \DateTime();
+                                            $query_verify_product = $this->db->query(
+                                                $sql_verify_product,
+                                                [
+                                                    'id' => intval($request->get('product'))
+                                                ]
+                                            );
 
-                                                $order->setUser(intval($token_array['id']));
-                                                $order->setProduct(intval($request->get('product')));
-                                                $order->setRawMaterial(intval($request->get('raw_material')));
-                                                $order->setQuantityProductRequested(intval($request->get('quantity_product_requested')));
-                                                $order->setQuantityRawMaterialLimit(intval($request->get('quantity_raw_material_limit')));
-                                                $order->setDate($date->format('Y-m-d H:i:s'));
-
-                                                $sql = '
-                                                    INSERT INTO orders
-                                                        (user, product, raw_material, quantity_product_requested, quantity_raw_material_limit, date)
-                                                    VALUES
-                                                        (:user, :product, :raw_material, :quantity_product_requested, :quantity_raw_material_limit, :date);
+                                            $row_product = $query_verify_product->numRows();
+                                            
+                                            if ( $row_product == 1 ) {
+                                                $sql_verify_raw_material = '
+                                                    SELECT
+                                                        stock
+                                                    FROM
+                                                        raw_materials
+                                                    WHERE
+                                                        id = :id;
                                                 ';
 
-                                                try {
-                                                    $this->db->begin();
+                                                $query_verify_raw_material = $this->db->query(
+                                                    $sql_verify_raw_material,
+                                                    [
+                                                        'id' => intval($request->get('raw_material'))
+                                                    ]
+                                                );
 
-                                                    $success = $this->db->query(
-                                                        $sql,
-                                                        [
-                                                            'user'                        => $order->getUser(),
-                                                            'product'                     => $order->getProduct(),
-                                                            'raw_material'                => $order->getRawMaterial(),
-                                                            'quantity_product_requested'  => $order->getQuantityProductRequested(),
-                                                            'quantity_raw_material_limit' => $order->getQuantityRawMaterialLimit(),
-                                                            'date'                        => $order->getDate()
-                                                        ]
-                                                    );
+                                                $result = $query_verify_raw_material->fetch();
 
-                                                    if ( $success ) {
+                                                if ( !empty($result) ) {
+                                                    if ( intval($request->get('quantity_raw_material_limit')) > 0 &&
+                                                         intval($request->get('quantity_raw_material_limit')) <= $result['stock'] ) {
+                                                        $date = new \DateTime();
+
+                                                        $orders->setSolicitor(intval($token_array['id']));
+                                                        $orders->setDesignated(intval($request->get('designated')));
+                                                        $orders->setProduct(intval($request->get('product')));
+                                                        $orders->setRawMaterial(intval($request->get('raw_material')));
+                                                        $orders->setQuantityProductRequested(intval($request->get('quantity_product_requested')));
+                                                        $orders->setQuantityRawMaterialLimit(intval($request->get('quantity_raw_material_limit')));
+                                                        $orders->setStatusOrder(intval($request->get('status')));
+                                                        $orders->setDateInitial($date->format('Y-m-d H:i:s'));
+                                                        $orders->setDateFinal(NULL);
+
+                                                        $sql = '
+                                                            INSERT INTO orders
+                                                                (solicitor, designated, product, raw_material, quantity_product_requested, quantity_raw_material_limit, status_order, date_initial, date_final)
+                                                            VALUES
+                                                                (:solicitor, :designated, :product, :raw_material, :quantity_product_requested, :quantity_raw_material_limit, :status_order, :date_initial, :date_final);
+                                                        ';
+
+                                                        try {
+                                                            $this->db->begin();
+
+                                                            $success = $this->db->query(
+                                                                $sql,
+                                                                [
+                                                                    'solicitor'                   => $orders->getSolicitor(),
+                                                                    'designated'                  => $orders->getDesignated(),
+                                                                    'product'                     => $orders->getProduct(),
+                                                                    'raw_material'                => $orders->getRawMaterial(),
+                                                                    'quantity_product_requested'  => $orders->getQuantityProductRequested(),
+                                                                    'quantity_raw_material_limit' => $orders->getQuantityRawMaterialLimit(),
+                                                                    'status_order'                => $orders->getStatusOrder(),
+                                                                    'date_initial'                => $orders->getDateInitial(),
+                                                                    'date_final'                  => $orders->getDateFinal()
+                                                                ]
+                                                            );
+
+                                                            if ( $success ) {
+                                                                $contents = [
+                                                                    'msg' => 'Cadastro realizado com sucesso!'
+                                                                ];
+                                                
+                                                                $response
+                                                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 201)
+                                                                    ->send();
+                                                            } else {
+                                                                $contents = [
+                                                                    'msg' => 'Falha no cadastro!'
+                                                                ];
+                                                
+                                                                $response
+                                                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                                                    ->send();
+                                                            }
+
+                                                            $this->db->commit();
+                                                        } catch (Exception $error) {
+                                                            $this->db->rollback();
+
+                                                            $contents = [
+                                                                'msg' => 'Ocorreu um erro em nosso servidor, tente mais tarde!'
+                                                            ];
+                                            
+                                                            $response
+                                                                ->setJsonContent($contents, JSON_PRETTY_PRINT, 500)
+                                                                ->send();
+                                                        }
+                                                    } else if ( intval($request->get('quantity_raw_material_limit')) < $result['stock'] ) {
                                                         $contents = [
-                                                            'msg' => 'Cadastro realizado com sucesso!'
+                                                            'msg' => 'A quantidade de matéria-prima requisitada precisa ser maior que 0!'
                                                         ];
                                         
                                                         $response
-                                                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 201)
+                                                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
                                                             ->send();
                                                     } else {
                                                         $contents = [
-                                                            'msg' => 'Falha no cadastro!'
+                                                            'msg' => 'A quantidade de matéria-prima requisitada é maior que a quantidade disponível em estoque!'
                                                         ];
                                         
                                                         $response
                                                             ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
                                                             ->send();
                                                     }
-
-                                                    $this->db->commit();
-                                                } catch (Exception $error) {
-                                                    $this->db->rollback();
-
+                                                } else {
                                                     $contents = [
-                                                        'msg' => 'Ocorreu um erro em nosso servidor, tente mais tarde!'
+                                                        'msg' => 'Matéria-prima não encontrada!'
                                                     ];
                                     
                                                     $response
-                                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 500)
+                                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
                                                         ->send();
                                                 }
                                             } else {
                                                 $contents = [
-                                                    'msg' => 'A quantidade de matéria-prima requisitada é maior que a quantidade disponível em estoque!'
+                                                    'msg' => 'Produto não encontrado!'
                                                 ];
                                 
                                                 $response
@@ -433,7 +532,7 @@
                                             }
                                         } else {
                                             $contents = [
-                                                'msg' => 'Matéria-prima não encontrada!'
+                                                'msg' => 'Status de pedido não encontrado!'
                                             ];
                             
                                             $response
@@ -442,7 +541,7 @@
                                         }
                                     } else {
                                         $contents = [
-                                            'msg' => 'Produto não encontrado!'
+                                            'msg' => 'Funcionário não encontrado!'
                                         ];
                         
                                         $response
@@ -464,7 +563,7 @@
                                 ];
                 
                                 $response
-                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
                                     ->send();
                             }
                         } else {
@@ -478,7 +577,7 @@
                         }
                     } else {
                         $contents = [
-                            'msg' => 'Não é possível acessar essa página, faça login!'
+                            'msg' => 'Sua sessão expirou. Por favor, faça login novamente!'
                         ];
         
                         $response
@@ -507,7 +606,7 @@
 
         public function update($id)
         {
-            $order = New Orders();
+            $orders = new Orders();
             
             $request = new Request();
 
@@ -531,14 +630,14 @@
 
                     if ( date(\DateTime::ISO8601) <= $nbf_array ) {
                         if ( intval($token_array['situation']) == 1 ) {
-                            if ( intval($token_array['level']) == 0 || intval($token_array['level']) == 1 ) {
+                            if ( intval($token_array['level']) == 1 || intval($token_array['level']) == 3 ) {
                                 $sql_verify_order = '
                                     SELECT
                                         *
                                     FROM
                                         orders
                                     WHERE
-                                        id = :id
+                                        id = :id;
                                 ';
 
                                 $query_verify_order = $this->db->query(
@@ -552,145 +651,233 @@
                                 $result = $query_verify_order->fetch();
 
                                 if ( $row == 1 ) {
-                                    if ( !empty($request->getPut('product')) && !empty($request->getPut('raw_material')) &&
+                                    if ( !empty($request->getPut('designated')) && !empty($request->getPut('product')) &&
+                                         !empty($request->getPut('raw_material')) &&
                                          !empty($request->getPut('quantity_product_requested')) &&
-                                         !empty($request->getPut('quantity_raw_material_limit')) ) {
-                                        $sql_verify_product = '
+                                         !empty($request->getPut('quantity_raw_material_limit')) &&
+                                         !empty($request->getPut('status')) ) {
+                                        $sql_verify_designated = '
                                             SELECT
                                                 *
                                             FROM
-                                                products
+                                                users
                                             WHERE
                                                 id = :id;
                                         ';
-
-                                        $query_verify_product = $this->db->query(
-                                            $sql_verify_product,
+    
+                                        $query_verify_designated = $this->db->query(
+                                            $sql_verify_designated,
                                             [
-                                                'id' => intval($request->getPut('product'))
+                                                'id' => intval($request->getPut('designated'))
                                             ]
                                         );
-
-                                        $row_product = $query_verify_product->numRows();
+    
+                                        $row_designated = $query_verify_designated->numRows();
                                         
-                                        if ( $row_product == 1 ) {
-                                            $sql_verify_raw_material = '
+                                        if ( $row_designated == 1 ) {
+                                            $sql_verify_status_order = '
                                                 SELECT
-                                                    stock
+                                                    *
                                                 FROM
-                                                    raw_materials
+                                                    status_orders
                                                 WHERE
                                                     id = :id;
                                             ';
-
-                                            $query_verify_raw_material = $this->db->query(
-                                                $sql_verify_raw_material,
+    
+                                            $query_verify_status_order = $this->db->query(
+                                                $sql_verify_status_order,
                                                 [
-                                                    'id' => intval($request->getPut('raw_material'))
+                                                    'id' => intval($request->getPut('status'))
                                                 ]
                                             );
+    
+                                            $row_status_order = $query_verify_status_order->numRows();
+                                            
+                                            if ( $row_status_order == 1 ) {
+                                                $sql_verify_product = '
+                                                    SELECT
+                                                        *
+                                                    FROM
+                                                        products
+                                                    WHERE
+                                                        id = :id;
+                                                ';
 
-                                            $result_raw_material = $query_verify_raw_material->fetch();
+                                                $query_verify_product = $this->db->query(
+                                                    $sql_verify_product,
+                                                    [
+                                                        'id' => intval($request->getPut('product'))
+                                                    ]
+                                                );
 
-                                            if ( !empty($result_raw_material) ) {
-                                                if ( intval($request->getPut('quantity_raw_material_limit')) <= $result_raw_material['stock'] ) {
-                                                    if ( intval($request->getPut('product')) != $result['product'] ||
-                                                         intval($request->getPut('raw_material')) != $result['raw_material'] ||
-                                                         intval($request->getPut('quantity_product_requested')) != $result['quantity_product_requested'] ||
-                                                         intval($request->getPut('quantity_raw_material_limit')) != $result['quantity_raw_material_limit'] ) {
-                                                        $date = new \DateTime();
-
-                                                        $order->setId($id);
-                                                        $order->setUser(intval($token_array['id']));
-                                                        $order->setDate($date->format('Y-m-d H:i:s'));
-    
-                                                        if ( intval($request->getPut('product')) != $result['product'] ) {
-                                                            $order->setProduct(intval($request->getPut('product')));
-                                                        } else {
-                                                            $order->setProduct($result['product']);
-                                                        }
-    
-                                                        if ( intval($request->getPut('raw_material')) != $result['raw_material'] ) {
-                                                            $order->setRawMaterial(intval($request->getPut('raw_material')));
-                                                        } else {
-                                                            $order->setRawMaterial($result['raw_material']);
-                                                        }
-    
-                                                        if ( intval($request->getPut('quantity_product_requested')) != $result['quantity_product_requested'] ) {
-                                                            $order->setQuantityProductRequested(intval($request->getPut('quantity_product_requested')));
-                                                        } else {
-                                                            $order->setQuantityProductRequested($result['quantity_product_requested']);
-                                                        }
-    
-                                                        if ( intval($request->getPut('quantity_raw_material_limit')) != $result['quantity_raw_material_limit'] ) {
-                                                            $order->setQuantityRawMaterialLimit(intval($request->getPut('quantity_raw_material_limit')));
-                                                        } else {
-                                                            $order->setQuantityRawMaterialLimit($result['quantity_raw_material_limit']);
-                                                        }
-    
-                                                        $sql = '
-                                                            UPDATE
-                                                                orders
-                                                            SET
-                                                                user = :user,
-                                                                product = :product,
-                                                                raw_material = :raw_material,
-                                                                quantity_product_requested = :quantity_product_requested,
-                                                                quantity_raw_material_limit = :quantity_raw_material_limit,
-                                                                date = :date
-                                                            WHERE
-                                                                id = :id;
-                                                        ';
-    
-                                                        try {
-                                                            $this->db->begin();
-    
-                                                            $success = $this->db->query(
-                                                                $sql,
-                                                                [
-                                                                    'id'                          => $order->getId(),
-                                                                    'user'                        => $order->getUser(),
-                                                                    'product'                     => $order->getProduct(),
-                                                                    'raw_material'                => $order->getRawMaterial(),
-                                                                    'quantity_product_requested'  => $order->getQuantityProductRequested(),
-                                                                    'quantity_raw_material_limit' => $order->getQuantityRawMaterialLimit(),
-                                                                    'date'                        => $order->getDate()
-                                                                ]
-                                                            );
-    
-                                                            if ( $success ) {
-                                                                $contents = [
-                                                                    'msg' => 'Pedido alterado com sucesso!'
-                                                                ];
+                                                $row_product = $query_verify_product->numRows();
                                                 
-                                                                $response
-                                                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 201)
-                                                                    ->send();
+                                                if ( $row_product == 1 ) {
+                                                    $sql_verify_raw_material = '
+                                                        SELECT
+                                                            stock
+                                                        FROM
+                                                            raw_materials
+                                                        WHERE
+                                                            id = :id;
+                                                    ';
+
+                                                    $query_verify_raw_material = $this->db->query(
+                                                        $sql_verify_raw_material,
+                                                        [
+                                                            'id' => intval($request->getPut('raw_material'))
+                                                        ]
+                                                    );
+
+                                                    $result_raw_material = $query_verify_raw_material->fetch();
+
+                                                    if ( !empty($result_raw_material) ) {
+                                                        if ( intval($request->getPut('quantity_raw_material_limit')) > 0 &&
+                                                             intval($request->getPut('quantity_raw_material_limit')) <= $result_raw_material['stock'] ) {
+                                                            if ( intval($request->getPut('designated')) != $result['designated'] ||
+                                                                 intval($request->getPut('product')) != $result['product'] ||
+                                                                 intval($request->getPut('raw_material')) != $result['raw_material'] ||
+                                                                 intval($request->getPut('quantity_product_requested')) != $result['quantity_product_requested'] ||
+                                                                 intval($request->getPut('quantity_raw_material_limit')) != $result['quantity_raw_material_limit'] ||
+                                                                 intval($request->getPut('status')) != $result['status_order'] ) {
+                                                                $date = new \DateTime();
+
+                                                                $orders->setId($id);
+                                                                $orders->setSolicitor($result['solicitor']);
+                                                                $orders->setDateInitial($result['date_initial']);
+                                                                $orders->setDateFinal($date->format('Y-m-d H:i:s'));
+                                                                
+                                                                if ( intval($request->getPut('designated')) != $result['designated'] ) {
+                                                                    $orders->setDesignated(intval($request->getPut('designated')));
+                                                                } else {
+                                                                    $orders->setDesignated($result['designated']);
+                                                                }
+
+                                                                if ( intval($request->getPut('product')) != $result['product'] ) {
+                                                                    $orders->setProduct(intval($request->getPut('product')));
+                                                                } else {
+                                                                    $orders->setProduct($result['product']);
+                                                                }
+            
+                                                                if ( intval($request->getPut('raw_material')) != $result['raw_material'] ) {
+                                                                    $orders->setRawMaterial(intval($request->getPut('raw_material')));
+                                                                } else {
+                                                                    $orders->setRawMaterial($result['raw_material']);
+                                                                }
+            
+                                                                if ( intval($request->getPut('quantity_product_requested')) != $result['quantity_product_requested'] ) {
+                                                                    $orders->setQuantityProductRequested(intval($request->getPut('quantity_product_requested')));
+                                                                } else {
+                                                                    $orders->setQuantityProductRequested($result['quantity_product_requested']);
+                                                                }
+            
+                                                                if ( intval($request->getPut('quantity_raw_material_limit')) != $result['quantity_raw_material_limit'] ) {
+                                                                    $orders->setQuantityRawMaterialLimit(intval($request->getPut('quantity_raw_material_limit')));
+                                                                } else {
+                                                                    $orders->setQuantityRawMaterialLimit($result['quantity_raw_material_limit']);
+                                                                }
+
+                                                                if ( intval($request->getPut('status')) != $result['status_order'] ) {
+                                                                    $orders->setStatusOrder(intval($request->getPut('status')));
+                                                                } else {
+                                                                    $orders->setStatusOrder($result['status_order']);
+                                                                }
+            
+                                                                $sql = '
+                                                                    UPDATE
+                                                                        orders
+                                                                    SET
+                                                                        solicitor                   = :solicitor,
+                                                                        designated                  = :designated,
+                                                                        product                     = :product,
+                                                                        raw_material                = :raw_material,
+                                                                        quantity_product_requested  = :quantity_product_requested,
+                                                                        quantity_raw_material_limit = :quantity_raw_material_limit,
+                                                                        status_order                = :status,
+                                                                        date_initial                = :date_initial,
+                                                                        date_final                  = :date_final
+                                                                    WHERE
+                                                                        id = :id;
+                                                                ';
+            
+                                                                try {
+                                                                    $this->db->begin();
+            
+                                                                    $success = $this->db->query(
+                                                                        $sql,
+                                                                        [
+                                                                            'id'                          => $orders->getId(),
+                                                                            'solicitor'                   => $orders->getSolicitor(),
+                                                                            'designated'                  => $orders->getDesignated(),
+                                                                            'product'                     => $orders->getProduct(),
+                                                                            'raw_material'                => $orders->getRawMaterial(),
+                                                                            'quantity_product_requested'  => $orders->getQuantityProductRequested(),
+                                                                            'quantity_raw_material_limit' => $orders->getQuantityRawMaterialLimit(),
+                                                                            'status'                      => $orders->getStatusOrder(),
+                                                                            'date_initial'                => $orders->getDateInitial(),
+                                                                            'date_final'                  => $orders->getDateFinal()
+                                                                        ]
+                                                                    );
+            
+                                                                    if ( $success ) {
+                                                                        $contents = [
+                                                                            'msg' => 'Pedido alterado com sucesso!'
+                                                                        ];
+                                                        
+                                                                        $response
+                                                                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 201)
+                                                                            ->send();
+                                                                    } else {
+                                                                        $contents = [
+                                                                            'msg' => 'Não foi possível alterar pedido!'
+                                                                        ];
+                                                        
+                                                                        $response
+                                                                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                                                            ->send();
+                                                                    }
+            
+                                                                    $this->db->commit();
+                                                                } catch (Exception $error) {
+                                                                    $this->db->rollback();
+            
+                                                                    $contents = [
+                                                                        'msg' => 'Ocorreu um erro em nosso servidor, tente mais tarde!'
+                                                                    ];
+                                                    
+                                                                    $response
+                                                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 500)
+                                                                        ->send();
+                                                                }
                                                             } else {
                                                                 $contents = [
-                                                                    'msg' => 'Não foi possível alterar pedido!'
+                                                                    'msg' => 'Digite pelo menos um campo com valor diferente do atual!'
                                                                 ];
                                                 
                                                                 $response
                                                                     ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
                                                                     ->send();
                                                             }
-    
-                                                            $this->db->commit();
-                                                        } catch (Exception $error) {
-                                                            $this->db->rollback();
-    
+                                                        } else if ( intval($request->get('quantity_raw_material_limit')) < $result['stock'] ) {
                                                             $contents = [
-                                                                'msg' => 'Ocorreu um erro em nosso servidor, tente mais tarde!'
+                                                                'msg' => 'A quantidade de matéria-prima requisitada precisa ser maior que 0!'
                                                             ];
                                             
                                                             $response
-                                                                ->setJsonContent($contents, JSON_PRETTY_PRINT, 500)
+                                                                ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                                                ->send();
+                                                        } else {
+                                                            $contents = [
+                                                                'msg' => 'A quantidade de matéria-prima requisitada é maior que a quantidade disponível em estoque!'
+                                                            ];
+                                            
+                                                            $response
+                                                                ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
                                                                 ->send();
                                                         }
                                                     } else {
                                                         $contents = [
-                                                            'msg' => 'Digite pelo menos um campo com valor diferente do atual!'
+                                                            'msg' => 'Matéria-prima não encontrada!'
                                                         ];
                                         
                                                         $response
@@ -699,7 +886,7 @@
                                                     }
                                                 } else {
                                                     $contents = [
-                                                        'msg' => 'A quantidade de matéria-prima requisitada é maior que a quantidade disponível em estoque!'
+                                                        'msg' => 'Produto não encontrado!'
                                                     ];
                                     
                                                     $response
@@ -708,7 +895,7 @@
                                                 }
                                             } else {
                                                 $contents = [
-                                                    'msg' => 'Matéria-prima não encontrada!'
+                                                    'msg' => 'Status de pedido não encontrado!'
                                                 ];
                                 
                                                 $response
@@ -717,7 +904,7 @@
                                             }
                                         } else {
                                             $contents = [
-                                                'msg' => 'Produto não encontrado!'
+                                                'msg' => 'Funcionário não encontrado!'
                                             ];
                             
                                             $response
@@ -748,7 +935,7 @@
                                 ];
                 
                                 $response
-                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
                                     ->send();
                             }
                         } else {
@@ -762,7 +949,7 @@
                         }
                     } else {
                         $contents = [
-                            'msg' => 'Não é possível acessar essa página, faça login!'
+                            'msg' => 'Sua sessão expirou. Por favor, faça login novamente!'
                         ];
         
                         $response
@@ -791,7 +978,7 @@
 
         public function delete($id)
         {
-            $order = new Orders();
+            $orders = new Orders();
 
             $request = new Request();
 
@@ -815,14 +1002,14 @@
 
                     if ( date(\DateTime::ISO8601) <= $nbf_array ) {
                         if ( intval($token_array['situation']) == 1 ) {
-                            if ( intval($token_array['level']) == 0 || intval($token_array['level']) == 1 ) {
+                            if ( intval($token_array['level']) == 1 || intval($token_array['level']) == 3 ) {
                                 $sql_verify_order = '
                                     SELECT
                                         *
                                     FROM
                                         orders
                                     WHERE
-                                        id = :id
+                                        id = :id;
                                 ';
 
                                 $query = $this->db->query(
@@ -832,16 +1019,16 @@
                                     ]
                                 );
 
-                                $verify_order_exists = $query->numRows();
+                                $verify_order_exist = $query->numRows();
 
-                                if ( $verify_order_exists == 1 ) {
-                                    $order->setId($id);
+                                if ( $verify_order_exist == 1 ) {
+                                    $orders->setId($id);
 
                                     $sql = '
                                         DELETE FROM
                                             orders
                                         WHERE
-                                            id = :id
+                                            id = :id;
                                     ';
 
                                     try {
@@ -850,7 +1037,7 @@
                                         $del = $this->db->execute(
                                             $sql,
                                             [
-                                                'id' => $order->getId()
+                                                'id' => $orders->getId()
                                             ]
                                         );
 
@@ -895,11 +1082,11 @@
                                 }
                             } else {
                                 $contents = [
-                                    'msg' => 'Você não possui autorização para fazer alterações nesse usuário!'
+                                    'msg' => 'Você não possui autorização para acessar essa página!'
                                 ];
                 
                                 $response
-                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
                                     ->send();
                             }
                         } else {
@@ -913,7 +1100,7 @@
                         }
                     } else {
                         $contents = [
-                            'msg' => 'Não é possível acessar essa página, faça login!'
+                            'msg' => 'Sua sessão expirou. Por favor, faça login novamente!'
                         ];
         
                         $response
