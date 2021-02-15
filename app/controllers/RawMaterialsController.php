@@ -6,9 +6,9 @@
     use Phalcon\Http\Request;
     use Phalcon\Http\Response;
     use Firebase\JWT\JWT;
-    use App\Models\RawMaterial;
+    use App\Models\RawMaterials;
 
-    class RawMaterialController extends Controller
+    class RawMaterialsController extends Controller
     {
         public function index()
         {
@@ -34,7 +34,7 @@
 
                     if ( date(\DateTime::ISO8601) <= $nbf_array ) {
                         if ( intval($token_array['situation']) == 1 ) {
-                            if ( intval($token_array['level']) == 0 || intval($token_array['level']) == 1 ) {
+                            if ( intval($token_array['level']) == 1 || intval($token_array['level']) == 4 ) {
                                 $sql = '
                                     SELECT
                                         id, name, stock
@@ -69,11 +69,11 @@
                                 }
                             } else {
                                 $contents = [
-                                    'msg' => 'Você não possui autorização para fazer alterações nesse usuário!'
+                                    'msg' => 'Você não possui autorização para acessar essa página!'
                                 ];
                 
                                 $response
-                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
                                     ->send();
                             }
                         } else {
@@ -87,7 +87,7 @@
                         }
                     } else {
                         $contents = [
-                            'msg' => 'Não é possível acessar essa página, faça login!'
+                            'msg' => 'Sua sessão expirou. Por favor, faça login novamente!'
                         ];
         
                         $response
@@ -116,7 +116,7 @@
 
         public function register()
         {
-            $raw_material = new RawMaterial();
+            $raw_materials = new RawMaterials();
             
             $request = new Request();
 
@@ -140,7 +140,7 @@
 
                     if ( date(\DateTime::ISO8601) <= $nbf_array ) {
                         if ( intval($token_array['situation']) == 1 ) {
-                            if ( intval($token_array['level']) == 0 || intval($token_array['level']) == 1 ) {
+                            if ( intval($token_array['level']) == 1 || intval($token_array['level']) == 4 ) {
                                 if ( !empty($request->get('name')) && !empty(intval($request->get('stock'))) ) {
                                     $sql_verify_raw_material = '
                                         SELECT
@@ -148,7 +148,7 @@
                                         FROM
                                             raw_materials
                                         WHERE
-                                            name = :name
+                                            name = :name;
                                     ';
 
                                     $query_verify_raw_material = $this->db->query(
@@ -161,8 +161,8 @@
                                     $verify_raw_material_exist = $query_verify_raw_material->numRows();
 
                                     if ( $verify_raw_material_exist < 1 ) {
-                                        $raw_material->setName($request->get('name'));
-                                        $raw_material->setStock(intval($request->get('stock')));
+                                        $raw_materials->setName($request->get('name'));
+                                        $raw_materials->setStock(intval($request->get('stock')));
 
                                         $sql = '
                                             INSERT INTO raw_materials
@@ -177,8 +177,8 @@
                                             $success = $this->db->query(
                                                 $sql,
                                                 [
-                                                    'name'  => $raw_material->getName(),
-                                                    'stock' => $raw_material->getStock()
+                                                    'name'  => $raw_materials->getName(),
+                                                    'stock' => $raw_materials->getStock()
                                                 ]
                                             );
 
@@ -232,11 +232,11 @@
                                 }
                             } else {
                                 $contents = [
-                                    'msg' => 'Você não possui autorização para fazer alterações nesse usuário!'
+                                    'msg' => 'Você não possui autorização para acessar essa página!'
                                 ];
                 
                                 $response
-                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
                                     ->send();
                             }
                         } else {
@@ -250,7 +250,7 @@
                         }
                     } else {
                         $contents = [
-                            'msg' => 'Não é possível acessar essa página, faça login!'
+                            'msg' => 'Sua sessão expirou. Por favor, faça login novamente!'
                         ];
         
                         $response
@@ -279,7 +279,7 @@
 
         public function update($id)
         {
-            $raw_material = new RawMaterial();
+            $raw_materials = new RawMaterials();
             
             $request = new Request();
 
@@ -303,9 +303,9 @@
 
                     if ( date(\DateTime::ISO8601) <= $nbf_array ) {
                         if ( intval($token_array['situation']) == 1 ) {
-                            if ( intval($token_array['level']) == 0 || intval($token_array['level']) == 1 ) {
+                            if ( intval($token_array['level']) == 1 || intval($token_array['level']) == 4 ) {
                                 if ( !empty($request->getPut('name')) && !empty($request->getPut('stock')) ) {
-                                    $raw_material->setId($id);
+                                    $raw_materials->setId($id);
 
                                     $sql_verify_raw_material = '
                                         SELECT
@@ -313,13 +313,13 @@
                                         FROM
                                             raw_materials
                                         WHERE
-                                            id = :id
+                                            id = :id;
                                     ';
 
                                     $query_verify_raw_material = $this->db->query(
                                         $sql_verify_raw_material,
                                         [
-                                            'id' => $raw_material->getId()
+                                            'id' => $raw_materials->getId()
                                         ]
                                     );
 
@@ -329,15 +329,15 @@
                                     if ( $row == 1 ) {
                                         if ( $request->getPut('name') != $result['name'] || $request->getPut('stock') != $result['stock'] ) {
                                             if ( $request->getPut('name') != $result['name'] ) {
-                                                $raw_material->setName($request->getPut('name'));
+                                                $raw_materials->setName($request->getPut('name'));
                                             } else {
-                                                $raw_material->setName($result['name']);
+                                                $raw_materials->setName($result['name']);
                                             }
         
                                             if ( $request->getPut('stock') != $result['stock'] ) {
-                                                $raw_material->setStock(intval($request->getPut('stock')));
+                                                $raw_materials->setStock(intval($request->getPut('stock')));
                                             } else {
-                                                $raw_material->setStock($result['stock']);
+                                                $raw_materials->setStock($result['stock']);
                                             }
 
                                             $sql = '
@@ -346,7 +346,7 @@
                                                 SET
                                                     name = :name, stock = :stock
                                                 WHERE
-                                                    id = :id
+                                                    id = :id;
                                             ';
         
                                             try {
@@ -355,9 +355,9 @@
                                                 $update = $this->db->execute(
                                                     $sql,
                                                     [
-                                                        'id'    => $raw_material->getId(),
-                                                        'name'  => $raw_material->getName(),
-                                                        'stock' => $raw_material->getStock()
+                                                        'id'    => $raw_materials->getId(),
+                                                        'name'  => $raw_materials->getName(),
+                                                        'stock' => $raw_materials->getStock()
                                                     ]
                                                 );
         
@@ -420,11 +420,11 @@
                                 }
                             } else {
                                 $contents = [
-                                    'msg' => 'Você não possui autorização para fazer alterações nesse usuário!'
+                                    'msg' => 'Você não possui autorização para acessar essa página!'
                                 ];
                 
                                 $response
-                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
                                     ->send();
                             }
                         } else {
@@ -438,7 +438,7 @@
                         }
                     } else {
                         $contents = [
-                            'msg' => 'Não é possível acessar essa página, faça login!'
+                            'msg' => 'Sua sessão expirou. Por favor, faça login novamente!'
                         ];
         
                         $response
@@ -467,7 +467,7 @@
 
         public function delete($id)
         {
-            $raw_material = new RawMaterial();
+            $raw_materials = new RawMaterials();
             
             $request = new Request();
 
@@ -491,14 +491,14 @@
 
                     if ( date(\DateTime::ISO8601) <= $nbf_array ) {
                         if ( intval($token_array['situation']) == 1 ) {
-                            if ( intval($token_array['level']) == 0 || intval($token_array['level']) == 1 ) {
+                            if ( intval($token_array['level']) == 1 || intval($token_array['level']) == 4 ) {
                                 $sql_verify_raw_material = '
                                     SELECT
                                         *
                                     FROM
                                         raw_materials
                                     WHERE
-                                        id = :id
+                                        id = :id;
                                 ';
 
                                 $query = $this->db->query(
@@ -511,7 +511,7 @@
                                 $verify_raw_material_exists = $query->numRows();
 
                                 if ( $verify_raw_material_exists == 1 ) {
-                                    $raw_material->setId($id);
+                                    $raw_materials->setId($id);
 
                                     $sql = '
                                         DELETE FROM
@@ -526,7 +526,7 @@
                                         $del = $this->db->execute(
                                             $sql,
                                             [
-                                                'id' => $raw_material->getId()
+                                                'id' => $raw_materials->getId()
                                             ]
                                         );
 
@@ -571,11 +571,11 @@
                                 }
                             } else {
                                 $contents = [
-                                    'msg' => 'Você não possui autorização para fazer alterações nesse usuário!'
+                                    'msg' => 'Você não possui autorização para acessar essa página!'
                                 ];
                 
                                 $response
-                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
                                     ->send();
                             }
                         } else {
@@ -589,7 +589,7 @@
                         }
                     } else {
                         $contents = [
-                            'msg' => 'Não é possível acessar essa página, faça login!'
+                            'msg' => 'Sua sessão expirou. Por favor, faça login novamente!'
                         ];
         
                         $response

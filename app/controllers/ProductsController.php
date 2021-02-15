@@ -6,9 +6,9 @@
     use Phalcon\Http\Request;
     use Phalcon\Http\Response;
     use Firebase\JWT\JWT;
-    use App\Models\Product;
+    use App\Models\Products;
 
-    class ProductController extends Controller
+    class ProductsController extends Controller
     {
         public function index()
         {
@@ -34,7 +34,7 @@
 
                     if ( date(\DateTime::ISO8601) <= $nbf_array ) {
                         if ( intval($token_array['situation']) == 1 ) {
-                            if ( intval($token_array['level']) == 0 || intval($token_array['level']) == 1 ) {
+                            if ( intval($token_array['level']) == 1 || intval($token_array['level']) == 3 ) {
                                 $sql = '
                                     SELECT
                                         p.id AS id, p.name AS name, c.name AS category
@@ -64,7 +64,7 @@
                                         ->send();
                                 } else {
                                     $contents = [
-                                        'msg' => 'Nenhuma produto encontrado!'
+                                        'msg' => 'Nenhum produto encontrado!'
                                     ];
                     
                                     $response
@@ -77,7 +77,7 @@
                                 ];
                 
                                 $response
-                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
                                     ->send();
                             }
                         } else {
@@ -91,7 +91,7 @@
                         }
                     } else {
                         $contents = [
-                            'msg' => 'Não é possível acessar essa página, faça login!'
+                            'msg' => 'Sua sessão expirou. Por favor, faça login novamente!'
                         ];
         
                         $response
@@ -120,7 +120,7 @@
 
         public function register()
         {
-            $product = new Product();
+            $products = new Products();
             
             $request = new Request();
 
@@ -144,7 +144,7 @@
 
                     if ( date(\DateTime::ISO8601) <= $nbf_array ) {
                         if ( intval($token_array['situation']) == 1 ) {
-                            if ( intval($token_array['level']) == 0 || intval($token_array['level']) == 1 ) {
+                            if ( intval($token_array['level']) == 1 || intval($token_array['level']) == 3 ) {
                                 if ( !empty($request->get('name')) && !empty(intval($request->get('category'))) ) {
                                     $sql_verify_product = '
                                         SELECT
@@ -152,7 +152,7 @@
                                         FROM
                                             products
                                         WHERE
-                                            name = :name
+                                            name = :name;
                                     ';
 
                                     $sql_verify_category = '
@@ -161,7 +161,7 @@
                                         FROM
                                             category
                                         WHERE
-                                            id = :id
+                                            id = :id;
                                     ';
 
                                     $query_verify_product = $this->db->query(
@@ -183,8 +183,8 @@
 
                                     if ( $verify_product_exist < 1 ) {
                                         if ( $verify_category_exist == 1 ) {
-                                            $product->setName($request->get('name'));
-                                            $product->setCategory(intval($request->get('category')));
+                                            $products->setName($request->get('name'));
+                                            $products->setCategory(intval($request->get('category')));
     
                                             $sql = '
                                                 INSERT INTO products
@@ -199,8 +199,8 @@
                                                 $success = $this->db->query(
                                                     $sql,
                                                     [
-                                                        'name'     => $product->getName(),
-                                                        'category' => $product->getCategory()
+                                                        'name'     => $products->getName(),
+                                                        'category' => $products->getCategory()
                                                     ]
                                                 );
     
@@ -263,11 +263,11 @@
                                 }
                             } else {
                                 $contents = [
-                                    'msg' => 'Você não possui autorização para fazer alterações nesse usuário!'
+                                    'msg' => 'Você não possui autorização para acessar essa página!'
                                 ];
                 
                                 $response
-                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
                                     ->send();
                             }
                         } else {
@@ -281,7 +281,7 @@
                         }
                     } else {
                         $contents = [
-                            'msg' => 'Não é possível acessar essa página, faça login!'
+                            'msg' => 'Sua sessão expirou. Por favor, faça login novamente!'
                         ];
         
                         $response
@@ -310,7 +310,7 @@
 
         public function update($id)
         {
-            $product = new Product();
+            $products = new Products();
             
             $request = new Request();
 
@@ -334,9 +334,9 @@
 
                     if ( date(\DateTime::ISO8601) <= $nbf_array ) {
                         if ( intval($token_array['situation']) == 1 ) {
-                            if ( intval($token_array['level']) == 0 || intval($token_array['level']) == 1 ) {
+                            if ( intval($token_array['level']) == 1 || intval($token_array['level']) == 3 ) {
                                 if ( !empty($request->getPut('name')) && !empty($request->getPut('category')) ) {
-                                    $product->setId($id);
+                                    $products->setId($id);
 
                                     $sql_verify_product = '
                                         SELECT
@@ -344,13 +344,13 @@
                                         FROM
                                             products
                                         WHERE
-                                            id = :id
+                                            id = :id;
                                     ';
 
                                     $query_verify_product = $this->db->query(
                                         $sql_verify_product,
                                         [
-                                            'id' => $product->getId()
+                                            'id' => $products->getId()
                                         ]
                                     );
 
@@ -364,7 +364,7 @@
                                             FROM
                                                 category
                                             WHERE
-                                                id = :id
+                                                id = :id;
                                         ';
 
                                         $query_verify_category = $this->db->query(
@@ -379,15 +379,15 @@
                                         if ( $row_category == 1 ) {
                                             if ( $request->getPut('name') != $result['name'] || $request->getPut('category') != $result['category'] ) {
                                                 if ( $request->getPut('name') != $result['name'] ) {
-                                                    $product->setName($request->getPut('name'));
+                                                    $products->setName($request->getPut('name'));
                                                 } else {
-                                                    $product->setName($result['name']);
+                                                    $products->setName($result['name']);
                                                 }
             
                                                 if ( $request->getPut('category') != $result['category'] ) {
-                                                    $product->setCategory(intval($request->getPut('category')));
+                                                    $products->setCategory(intval($request->getPut('category')));
                                                 } else {
-                                                    $product->setCategory($result['category']);
+                                                    $products->setCategory($result['category']);
                                                 }
     
                                                 $sql = '
@@ -396,7 +396,7 @@
                                                     SET
                                                         name = :name, category = :category
                                                     WHERE
-                                                        id = :id
+                                                        id = :id;
                                                 ';
             
                                                 try {
@@ -405,9 +405,9 @@
                                                     $update = $this->db->execute(
                                                         $sql,
                                                         [
-                                                            'id'       => $product->getId(),
-                                                            'name'     => $product->getName(),
-                                                            'category' => $product->getCategory()
+                                                            'id'       => $products->getId(),
+                                                            'name'     => $products->getName(),
+                                                            'category' => $products->getCategory()
                                                         ]
                                                     );
             
@@ -479,11 +479,11 @@
                                 }
                             } else {
                                 $contents = [
-                                    'msg' => 'Você não possui autorização para fazer alterações nesse usuário!'
+                                    'msg' => 'Você não possui autorização para acessar essa página!'
                                 ];
                 
                                 $response
-                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
                                     ->send();
                             }
                         } else {
@@ -497,7 +497,7 @@
                         }
                     } else {
                         $contents = [
-                            'msg' => 'Não é possível acessar essa página, faça login!'
+                            'msg' => 'Sua sessão expirou. Por favor, faça login novamente!'
                         ];
         
                         $response
@@ -526,7 +526,7 @@
 
         public function delete($id)
         {
-            $product = new Product();
+            $products = new Products();
             
             $request = new Request();
 
@@ -550,14 +550,14 @@
 
                     if ( date(\DateTime::ISO8601) <= $nbf_array ) {
                         if ( intval($token_array['situation']) == 1 ) {
-                            if ( intval($token_array['level']) == 0 || intval($token_array['level']) == 1 ) {
+                            if ( intval($token_array['level']) == 1 || intval($token_array['level']) == 3 ) {
                                 $sql_verify_product = '
                                     SELECT
                                         *
                                     FROM
                                         products
                                     WHERE
-                                        id = :id
+                                        id = :id;
                                 ';
 
                                 $query = $this->db->query(
@@ -570,13 +570,13 @@
                                 $verify_product_exists = $query->numRows();
 
                                 if ( $verify_product_exists == 1 ) {
-                                    $product->setId($id);
+                                    $products->setId($id);
 
                                     $sql = '
                                         DELETE FROM
                                             products
                                         WHERE
-                                            id = :id
+                                            id = :id;
                                     ';
 
                                     try {
@@ -585,7 +585,7 @@
                                         $del = $this->db->execute(
                                             $sql,
                                             [
-                                                'id' => $product->getId()
+                                                'id' => $products->getId()
                                             ]
                                         );
 
@@ -630,11 +630,11 @@
                                 }
                             } else {
                                 $contents = [
-                                    'msg' => 'Você não possui autorização para fazer alterações nesse usuário!'
+                                    'msg' => 'Você não possui autorização para acessar essa página!'
                                 ];
                 
                                 $response
-                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
                                     ->send();
                             }
                         } else {
@@ -648,7 +648,7 @@
                         }
                     } else {
                         $contents = [
-                            'msg' => 'Não é possível acessar essa página, faça login!'
+                            'msg' => 'Sua sessão expirou. Por favor, faça login novamente!'
                         ];
         
                         $response
