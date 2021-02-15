@@ -145,7 +145,7 @@
                                 if ( !empty($request->get('name')) ) {
                                     $sql_verify_role = '
                                         SELECT
-                                            name
+                                            *
                                         FROM
                                             roles
                                         WHERE
