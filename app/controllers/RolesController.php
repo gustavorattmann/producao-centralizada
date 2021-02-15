@@ -49,8 +49,9 @@
                                     foreach ($result as $key => $role) {
                                         $contents[$key] = [
                                             'role' => [
-                                                'id'   => $role['id'],
-                                                'name' => $role['name']
+                                                'id'        => $role['id'],
+                                                'name'      => $role['name'],
+                                                'situation' => $role['situation']
                                             ]
                                         ];
                                     }
@@ -162,12 +163,13 @@
 
                                     if ( $verify_role_exist < 1 ) {
                                         $roles->setName($request->get('name'));
+                                        $roles->setSituation(1);
 
                                         $sql = '
                                             INSERT INTO roles
-                                                (name)
+                                                (name, situation)
                                             VALUES
-                                                (:name);
+                                                (:name, :situation);
                                         ';
 
                                         try {
@@ -176,7 +178,8 @@
                                             $success = $this->db->query(
                                                 $sql,
                                                 [
-                                                    'name' => $roles->getName()
+                                                    'name'      => $roles->getName(),
+                                                    'situation' => $roles->getSituation()
                                                 ]
                                             );
 
@@ -302,34 +305,47 @@
                     if ( date(\DateTime::ISO8601) <= $nbf_array ) {
                         if ( intval($token_array['situation']) == 1 ) {
                             if ( intval($token_array['level']) == 1 || intval($token_array['level']) == 2 ) {
-                                if ( !empty($request->getPut('name')) ) {
-                                    $roles->setId($id);
-                                    $roles->setName($request->getPut('name'));
-
+                                if ( !empty($request->getPut('name')) && !empty($request->getPut('situation')) ) {
                                     $sql_verify_role = '
                                         SELECT
-                                            name
+                                            name, situation
                                         FROM
                                             roles
                                         WHERE
-                                            name = :name;
+                                            id = :id;
                                     ';
 
                                     $query = $this->db->query(
                                         $sql_verify_role,
                                         [
-                                            'name' => $roles->getName()
+                                            'id' => $id
                                         ]
                                     );
 
+                                    $row = $query->numRows();
                                     $result = $query->fetch();
 
-                                    if ( $roles->getName() != $result['name'] ) {
+                                    if ( $row == 1 ) {
+                                        $roles->setId($id);
+
+                                        if ( $request->getPut('name') != $result['name'] ) {
+                                            $roles->setName($request->getPut('name'));
+                                        } else {
+                                            $roles->setName($result['name']);
+                                        }
+
+                                        if ( intval($request->getPut('situation')) != $result['situation'] ) {
+                                            $roles->setSituation(intval($request->getPut('situation')));
+                                        } else {
+                                            $roles->setSituation($result['situation']);
+                                        }
+
                                         $sql = '
                                             UPDATE
                                                 roles
                                             SET
-                                                name = :name
+                                                name = :name,
+                                                situation = :situation
                                             WHERE
                                                 id = :id;
                                         ';
@@ -340,8 +356,9 @@
                                             $update = $this->db->execute(
                                                 $sql,
                                                 [
-                                                    'id'   => $roles->getId(),
-                                                    'name' => $roles->getName()
+                                                    'id'        => $roles->getId(),
+                                                    'name'      => $roles->getName(),
+                                                    'situation' => $roles->getSituation()
                                                 ]
                                             );
 
@@ -377,7 +394,7 @@
                                         }
                                     } else {
                                         $contents = [
-                                            'msg' => 'Preencha um nome diferente do atual!'
+                                            'msg' => 'Cargo não encontrado!'
                                         ];
                         
                                         $response
@@ -386,7 +403,7 @@
                                     }
                                 } else {
                                     $contents = [
-                                        'msg' => 'Preencha um nome para o cargo!'
+                                        'msg' => 'Dados incompletos!'
                                     ];
                     
                                     $response
