@@ -48,7 +48,7 @@
                                 if ( !empty($result) ) {
                                     foreach ($result as $key => $status_order) {
                                         $contents[$key] = [
-                                            'roles' => [
+                                            'status_order' => [
                                                 'id'   => $status_order['id'],
                                                 'name' => $status_order['name']
                                             ]
