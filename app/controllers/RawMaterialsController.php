@@ -37,7 +37,7 @@
                             if ( intval($token_array['level']) == 1 || intval($token_array['level']) == 4 ) {
                                 $sql = '
                                     SELECT
-                                        id, name, stock
+                                        id, name, stock, situation
                                     FROM
                                         raw_materials;
                                 ';
@@ -48,9 +48,10 @@
                                     foreach ($raw_materials as $key => $raw_material) {
                                         $contents[$key] = [
                                             'raw_material' => [
-                                                'id'    => $raw_material['id'],
-                                                'name'  => $raw_material['name'],
-                                                'stock' => $raw_material['stock']
+                                                'id'        => $raw_material['id'],
+                                                'name'      => $raw_material['name'],
+                                                'stock'     => $raw_material['stock'],
+                                                'situation' => $raw_material['situation']
                                             ]
                                         ];
                                     }
@@ -163,12 +164,13 @@
                                     if ( $verify_raw_material_exist < 1 ) {
                                         $raw_materials->setName($request->get('name'));
                                         $raw_materials->setStock(intval($request->get('stock')));
+                                        $raw_materials->setSituation(1);
 
                                         $sql = '
                                             INSERT INTO raw_materials
-                                                (name, stock)
+                                                (name, stock, situation)
                                             VALUES
-                                                (:name, :stock);
+                                                (:name, :stock, :situation);
                                         ';
 
                                         try {
@@ -177,8 +179,9 @@
                                             $success = $this->db->query(
                                                 $sql,
                                                 [
-                                                    'name'  => $raw_materials->getName(),
-                                                    'stock' => $raw_materials->getStock()
+                                                    'name'      => $raw_materials->getName(),
+                                                    'stock'     => $raw_materials->getStock(),
+                                                    'situation' => $raw_materials->getSituation()
                                                 ]
                                             );
 
@@ -227,7 +230,7 @@
                                     ];
                     
                                     $response
-                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
+                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
                                         ->send();
                                 }
                             } else {
@@ -304,9 +307,7 @@
                     if ( date(\DateTime::ISO8601) <= $nbf_array ) {
                         if ( intval($token_array['situation']) == 1 ) {
                             if ( intval($token_array['level']) == 1 || intval($token_array['level']) == 4 ) {
-                                if ( !empty($request->getPut('name')) && !empty($request->getPut('stock')) ) {
-                                    $raw_materials->setId($id);
-
+                                if ( !empty($request->getPut('name')) && !empty($request->getPut('stock')) && !empty($request->getPut('situation')) ) {
                                     $sql_verify_raw_material = '
                                         SELECT
                                             *
@@ -319,7 +320,7 @@
                                     $query_verify_raw_material = $this->db->query(
                                         $sql_verify_raw_material,
                                         [
-                                            'id' => $raw_materials->getId()
+                                            'id' => $id
                                         ]
                                     );
 
@@ -327,7 +328,10 @@
                                     $result = $query_verify_raw_material->fetch();
 
                                     if ( $row == 1 ) {
-                                        if ( $request->getPut('name') != $result['name'] || $request->getPut('stock') != $result['stock'] ) {
+                                        if ( $request->getPut('name') != $result['name'] || $request->getPut('stock') != $result['stock'] ||
+                                             $request->getPut('situation') != $result['situation'] ) {
+                                            $raw_materials->setId($id);
+
                                             if ( $request->getPut('name') != $result['name'] ) {
                                                 $raw_materials->setName($request->getPut('name'));
                                             } else {
@@ -340,11 +344,17 @@
                                                 $raw_materials->setStock($result['stock']);
                                             }
 
+                                            if ( $request->getPut('situation') != $result['situation'] ) {
+                                                $raw_materials->setSituation(intval($request->getPut('situation')));
+                                            } else {
+                                                $raw_materials->setSituation($result['situation']);
+                                            }
+
                                             $sql = '
                                                 UPDATE
                                                     raw_materials
                                                 SET
-                                                    name = :name, stock = :stock
+                                                    name = :name, stock = :stock, situation = :situation
                                                 WHERE
                                                     id = :id;
                                             ';
@@ -355,9 +365,10 @@
                                                 $update = $this->db->execute(
                                                     $sql,
                                                     [
-                                                        'id'    => $raw_materials->getId(),
-                                                        'name'  => $raw_materials->getName(),
-                                                        'stock' => $raw_materials->getStock()
+                                                        'id'        => $raw_materials->getId(),
+                                                        'name'      => $raw_materials->getName(),
+                                                        'stock'     => $raw_materials->getStock(),
+                                                        'situation' => $raw_materials->getSituation()
                                                     ]
                                                 );
         
@@ -371,7 +382,7 @@
                                                         ->send();
                                                 } else {
                                                     $contents = [
-                                                        'msg' => 'Matéria-prima não foi alterada, pois os campos estão com valores iguais!'
+                                                        'msg' => 'Falha na alteração da matéria-prima!'
                                                     ];
                             
                                                     $response
@@ -411,7 +422,7 @@
                                     }
                                 } else {
                                     $contents = [
-                                        'msg' => 'Preencha um nome para o produto!'
+                                        'msg' => 'Dados incompletos!'
                                     ];
                     
                                     $response
