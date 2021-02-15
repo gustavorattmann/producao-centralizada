@@ -392,10 +392,18 @@
                                                 ->setJsonContent($contents, JSON_PRETTY_PRINT, 500)
                                                 ->send();
                                         }
+                                    } else {
+                                        $contents = [
+                                            'msg' => 'Categoria não encontrada!'
+                                        ];
+                        
+                                        $response
+                                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                            ->send();
                                     }
                                 } else {
                                     $contents = [
-                                        'msg' => 'Preencha um nome para a categoria!'
+                                        'msg' => 'Dados incompletos!'
                                     ];
                     
                                     $response
