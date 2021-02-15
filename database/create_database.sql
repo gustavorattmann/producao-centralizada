@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS category
 (
 	id INTEGER NOT NULL AUTO_INCREMENT,
     name VARCHAR(50) NOT NULL,
+    situation TINYINT DEFAULT 1 NOT NULL, /* 0 - inactive, 1 - active */
     
     CONSTRAINT pk_category PRIMARY KEY (id),
     CONSTRAINT un_category_name UNIQUE (name)
@@ -45,7 +46,8 @@ CREATE TABLE IF NOT EXISTS products
 (
 	id INTEGER NOT NULL AUTO_INCREMENT,
     name VARCHAR(50) NOT NULL,
-    category INTEGER NOT NULL,
+    category INTEGER NULL,
+    situation TINYINT DEFAULT 1 NOT NULL, /* 0 - inactive, 1 - active */
     
     CONSTRAINT pk_products PRIMARY KEY (id),
     CONSTRAINT un_products_name UNIQUE (name),
@@ -57,6 +59,7 @@ CREATE TABLE IF NOT EXISTS raw_materials
 	id INTEGER NOT NULL AUTO_INCREMENT,
     name VARCHAR(50) NOT NULL,
     stock INTEGER NOT NULL,
+    situation TINYINT DEFAULT 1 NOT NULL, /* 0 - inactive, 1 - active */
     
     CONSTRAINT pk_raw_materials PRIMARY KEY (id),
 	CONSTRAINT un_raw_materials_name UNIQUE (name)
@@ -66,6 +69,7 @@ CREATE TABLE IF NOT EXISTS status_orders
 (
 	id INTEGER NOT NULL AUTO_INCREMENT,
     name VARCHAR(50) NOT NULL,
+    situation TINYINT DEFAULT 1 NOT NULL, /* 0 - inactive, 1 - active */
     
     CONSTRAINT pk_status_orders PRIMARY KEY (id),
     CONSTRAINT un_status_orders_name UNIQUE (name)
@@ -80,9 +84,10 @@ CREATE TABLE IF NOT EXISTS orders
     raw_material INTEGER NOT NULL,
     quantity_product_requested INTEGER CHECK (quantity_product_requested > 0) NOT NULL,
     quantity_raw_material_limit INTEGER CHECK (quantity_raw_material_limit > 0) NOT NULL,
-    status_order INTEGER NOT NULL,
+    status_order INTEGER NULL,
+    situation TINYINT DEFAULT 1 NOT NULL, /* 0 - inactive, 1 - active */
     date_initial TIMESTAMP NOT NULL,
-    date_final TIMESTAMP NOT NULL,
+    date_final TIMESTAMP NULL,
 
     CONSTRAINT pk_orders PRIMARY KEY (id),
     CONSTRAINT fk_solicitor_orders FOREIGN KEY (solicitor) REFERENCES users (id),
@@ -101,8 +106,9 @@ CREATE TABLE IF NOT EXISTS production
     quantity_raw_material_used INTEGER CHECK (quantity_raw_material_used > 0) NOT NULL,
     quantity_raw_material_losted INTEGER CHECK (quantity_raw_material_losted > 0) NOT NULL,
     justification TEXT NULL,
+    situation TINYINT DEFAULT 1 NOT NULL, /* 0 - inactive, 1 - active */
     date_initial TIMESTAMP NOT NULL,
-    date_final TIMESTAMP NOT NULL,
+    date_final TIMESTAMP NULL,
     
     CONSTRAINT pk_production PRIMARY KEY (id),
     CONSTRAINT fk_orders FOREIGN KEY (ordered) REFERENCES orders (id)
