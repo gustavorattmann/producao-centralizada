@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS roles
 (
 	id INTEGER NOT NULL AUTO_INCREMENT,
     name VARCHAR(50) NOT NULL,
+    situation TINYINT DEFAULT 1 NOT NULL, /* 0 - inactive, 1 - active */
     
     CONSTRAINT pk_roles PRIMARY KEY (id),
     CONSTRAINT un_roles_name UNIQUE (name)
