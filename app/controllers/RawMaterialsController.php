@@ -307,7 +307,7 @@
                     if ( date(\DateTime::ISO8601) <= $nbf_array ) {
                         if ( intval($token_array['situation']) == 1 ) {
                             if ( intval($token_array['level']) == 1 || intval($token_array['level']) == 4 ) {
-                                if ( !empty($request->getPut('name')) && !empty($request->getPut('stock')) && is_numeric(intval($request->getPut('situation'))) ) {
+                                if ( !empty($request->getPut('name')) && !empty($request->getPut('stock')) && is_numeric($request->getPut('situation')) ) {
                                     if ( $request->getPut('situation') == 0 || $request->getPut('situation') == 1 ) {
                                         $sql_verify_raw_material = '
                                             SELECT
