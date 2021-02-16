@@ -40,7 +40,7 @@
                                         p.id AS id, p.name AS name, c.name AS category, p.situation AS situation
                                     FROM
                                         products p
-                                    INNER JOIN
+                                    LEFT JOIN
                                         category c
                                     ON
                                         p.category = c.id;
