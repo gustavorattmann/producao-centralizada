@@ -163,7 +163,7 @@
 
                                     if ( $verify_status_order_exist < 1 ) {
                                         $status_orders->setName($request->get('name'));
-                                        $status_order->setSituation(1);
+                                        $status_orders->setSituation(1);
 
                                         $sql = '
                                             INSERT INTO status_orders
@@ -313,13 +313,13 @@
                                             FROM
                                                 status_orders
                                             WHERE
-                                                name = :name;
+                                                id = :id;
                                         ';
 
                                         $query = $this->db->query(
                                             $sql_verify_status_order,
                                             [
-                                                'name' => $status_orders->getName()
+                                                'id' => $id
                                             ]
                                         );
 
@@ -327,76 +327,105 @@
                                         $result = $query->fetch();
 
                                         if ( $row == 1 ) {
-                                            if ( $request->getPut('name') != $result['name'] || intval($request->getPut('situation')) != $result['situation'] ) {
-                                                $status_orders->setId($id);
-                                            
-                                                if ( $request->getPut('name') != $result['name'] ) {
-                                                    $status_orders->setName($request->getPut('name'));
-                                                } else {
-                                                    $status_orders->setName($result['name']);
-                                                }
+                                            $sql_verify_status_order_name = '
+                                                SELECT
+                                                    name
+                                                FROM
+                                                    status_orders
+                                                WHERE
+                                                    id != :id AND name = :name;
+                                            ';
 
-                                                if ( intval($request->getPut('situation')) != $result['situation'] ) {
-                                                    $status_orders->setSituation(intval($request->getPut('situation')));
-                                                } else {
-                                                    $status_orders->setSituation($result['situation']);
-                                                }
+                                            $query_verify_status_order_name = $this->db->query(
+                                                $sql_verify_status_order_name,
+                                                [
+                                                    'id'   => $id,
+                                                    'name' => $request->getPut('name')
+                                                ]
+                                            );
 
-                                                $sql = '
-                                                    UPDATE
-                                                        status_orders
-                                                    SET
-                                                        name = :name,
-                                                        situation = :situation
-                                                    WHERE
-                                                        id = :id;
-                                                ';
+                                            $row_status_order_name = $query_verify_status_order_name->numRows();
 
-                                                try {
-                                                    $this->db->begin();
-
-                                                    $update = $this->db->execute(
-                                                        $sql,
-                                                        [
-                                                            'id'        => $status_order->getId(),
-                                                            'name'      => $status_orders->getName(),
-                                                            'situation' => $status_orders->getSituation()
-                                                        ]
-                                                    );
-
-                                                    if ( $update ) {
-                                                        $contents = [
-                                                            'msg' => 'Status de pedidos alterado com sucesso!'
-                                                        ];
-                                        
-                                                        $response
-                                                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 201)
-                                                            ->send();
+                                            if ( $row_status_order_name == 0 ) {
+                                                if ( $request->getPut('name') != $result['name'] || intval($request->getPut('situation')) != $result['situation'] ) {
+                                                    $status_orders->setId($id);
+                                                
+                                                    if ( $request->getPut('name') != $result['name'] ) {
+                                                        $status_orders->setName($request->getPut('name'));
                                                     } else {
+                                                        $status_orders->setName($result['name']);
+                                                    }
+    
+                                                    if ( intval($request->getPut('situation')) != $result['situation'] ) {
+                                                        $status_orders->setSituation(intval($request->getPut('situation')));
+                                                    } else {
+                                                        $status_orders->setSituation($result['situation']);
+                                                    }
+    
+                                                    $sql = '
+                                                        UPDATE
+                                                            status_orders
+                                                        SET
+                                                            name = :name,
+                                                            situation = :situation
+                                                        WHERE
+                                                            id = :id;
+                                                    ';
+    
+                                                    try {
+                                                        $this->db->begin();
+    
+                                                        $update = $this->db->execute(
+                                                            $sql,
+                                                            [
+                                                                'id'        => $status_orders->getId(),
+                                                                'name'      => $status_orders->getName(),
+                                                                'situation' => $status_orders->getSituation()
+                                                            ]
+                                                        );
+    
+                                                        if ( $update ) {
+                                                            $contents = [
+                                                                'msg' => 'Status de pedidos alterado com sucesso!'
+                                                            ];
+                                            
+                                                            $response
+                                                                ->setJsonContent($contents, JSON_PRETTY_PRINT, 201)
+                                                                ->send();
+                                                        } else {
+                                                            $contents = [
+                                                                'msg' => 'Falha na alteração de status de pedidos!'
+                                                            ];
+                                            
+                                                            $response
+                                                                ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                                                ->send();
+                                                        }
+    
+                                                        $this->db->commit();
+                                                    } catch (Exception $error) {
+                                                        $this->db->rollback();
+                            
                                                         $contents = [
-                                                            'msg' => 'Falha na alteração de status de pedidos!'
+                                                            'msg' => 'Ocorreu um erro em nosso servidor, tente mais tarde!'
                                                         ];
                                         
                                                         $response
-                                                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 500)
                                                             ->send();
                                                     }
-
-                                                    $this->db->commit();
-                                                } catch (Exception $error) {
-                                                    $this->db->rollback();
-                        
+                                                } else {
                                                     $contents = [
-                                                        'msg' => 'Ocorreu um erro em nosso servidor, tente mais tarde!'
+                                                        'msg' => 'Preencha pelo menos um campo com valor diferente do atual!'
                                                     ];
                                     
                                                     $response
-                                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 500)
+                                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
                                                         ->send();
                                                 }
                                             } else {
                                                 $contents = [
-                                                    'msg' => 'Preencha pelo menos um campo com valor diferente do atual!'
+                                                    'msg' => 'Já existe uma categoria cadastrada com esse nome!'
                                                 ];
                                 
                                                 $response
@@ -538,7 +567,7 @@
                                         SET
                                             status_order = :status_order
                                         WHERE
-                                            status = :status;
+                                            status_order = :status;
                                     ';
 
                                     try {
