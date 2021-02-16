@@ -449,7 +449,7 @@
                                         } else {
                                             $sql_verify_role = '
                                                 SELECT
-                                                    name
+                                                    situation
                                                 FROM
                                                     roles
                                                 WHERE
@@ -463,46 +463,59 @@
                                                 ]
                                             );
 
-                                            if ( $role_verified->numRows() == 1 ) {
-                                                $password_hashed = $security->hash($request->get('password'));
+                                            $row_role = $role_verified->numRows();
+                                            $role = $role_verified->fetch();
 
-                                                $users->setName($request->get('name'));
-                                                $users->setEmail($request->get('email'));
-                                                $users->setPassword($password_hashed);
-                                                $users->setLevel(intval($request->get('level')));
-                                                $users->setSituation(intval($request->get('situation')));
-    
-                                                $sql = '
-                                                    INSERT INTO users
-                                                        (name, email, password, level, situation)
-                                                    VALUES
-                                                        (:name, :email, :password, :level, :situation);
-                                                ';
-    
-                                                $success = $this->db->query(
-                                                    $sql,
-                                                    [
-                                                        'name'      => $users->getName(),
-                                                        'email'     => $users->getEmail(),
-                                                        'password'  => $users->getPassword(),
-                                                        'level'     => $users->getLevel(),
-                                                        'situation' => $users->getSituation(),
-                                                    ]
-                                                );
-                            
-                                                if ( $success ) {
-                                                    $contents = [
-                                                        'msg' => 'Cadastro realizado com sucesso!'
-                                                    ];
-                                    
-                                                    $response
-                                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 201)
-                                                        ->send();
+                                            if ( $row_role == 1 ) {
+                                                if ( $role['situation'] == 1 ) {
+                                                    $password_hashed = $security->hash($request->get('password'));
+
+                                                    $users->setName($request->get('name'));
+                                                    $users->setEmail($request->get('email'));
+                                                    $users->setPassword($password_hashed);
+                                                    $users->setLevel(intval($request->get('level')));
+                                                    $users->setSituation(intval($request->get('situation')));
+        
+                                                    $sql = '
+                                                        INSERT INTO users
+                                                            (name, email, password, level, situation)
+                                                        VALUES
+                                                            (:name, :email, :password, :level, :situation);
+                                                    ';
+        
+                                                    $success = $this->db->query(
+                                                        $sql,
+                                                        [
+                                                            'name'      => $users->getName(),
+                                                            'email'     => $users->getEmail(),
+                                                            'password'  => $users->getPassword(),
+                                                            'level'     => $users->getLevel(),
+                                                            'situation' => $users->getSituation(),
+                                                        ]
+                                                    );
+                                
+                                                    if ( $success ) {
+                                                        $contents = [
+                                                            'msg' => 'Cadastro realizado com sucesso!'
+                                                        ];
+                                        
+                                                        $response
+                                                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 201)
+                                                            ->send();
+                                                    } else {
+                                                        $contents = [
+                                                            'msg' => 'Falha no cadastro!'
+                                                        ];
+                                        
+                                                        $response
+                                                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                                            ->send();
+                                                    }
                                                 } else {
                                                     $contents = [
-                                                        'msg' => 'Falha no cadastro!'
+                                                        'msg' => 'Cargo não está ativo, faça a ativação ou escolha outro!'
                                                     ];
-                                    
+            
                                                     $response
                                                         ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
                                                         ->send();
@@ -619,166 +632,180 @@
                             }
 
                             if ( intval($token_array['id']) == $user->getId() || (intval($token_array['level']) == 1 || intval($token_array['level']) == 2) ) {
-                                $sql_verify_role = '
-                                    SELECT
-                                        *
-                                    FROM
-                                        roles
-                                    WHERE
-                                        id = :id;
-                                ';
-                
-                                $role_verified = $this->db->query(
-                                    $sql_verify_role,
-                                    [
-                                        'id' => $request->getPut('level')
-                                    ]
-                                );
-                
-                                if ( $role_verified == 1 ) {
-                                    $sql_verify_user = '
+                                if ( !empty($request->getPut('name')) && !empty($request->getPut('email')) &&
+                                     !empty($request->getPut('level')) && !empty($request->getPut('situation')) ) {
+                                    $sql_verify_role = '
                                         SELECT
-                                            *
+                                            situation
                                         FROM
-                                            users
+                                            roles
                                         WHERE
                                             id = :id;
                                     ';
                     
-                                    $query = $this->db->query(
-                                        $sql_verify_user,
+                                    $role_verified = $this->db->query(
+                                        $sql_verify_role,
                                         [
-                                            'id' => $users->getId()
+                                            'id' => $request->getPut('level')
                                         ]
                                     );
+    
+                                    $row_role = $role_verified->numRows();
+                                    $role = $role_verified->fetch();
                     
-                                    $result = $query->fetch();
-                    
-                                    if ( ( ($request->getPut('name') != $result['name']) || ($request->getPut('email') != $result['email']) ||
-                                        ($request->getPut('level') != $result['level']) || ($request->getPut('situation') != $result['situation']) ) ) {
-                                        if ( $request->getPut('name') != $result['name'] ) {
-                                            $users->setName($request->getPut('name'));
-                                        } else {
-                                            $users->setName($result['name']);
-                                        }
-
-                                        $sql_verify_email = '
-                                            SELECT
-                                                email
-                                            FROM
-                                                users
-                                            WHERE
-                                                email = :email;
-                                        ';
-
-                                        $query_email = $this->db->query(
-                                            $sql_verify_email,
-                                            [
-                                                'email' => $request->getPut('email')
-                                            ]
-                                        );
-
-                                        $row = $query_email->numRows();
-                    
-                                        if ( $request->getPut('email') != $result['email'] && $row < 1 ) {
-                                            $users->setEmail($request->getPut('email'));
-                                        } else {
-                                            $users->setEmail($result['email']);
-                                        }
-                                        
-                                        if ( intval($token_array['level']) == 1 || intval($token_array['level']) == 2 ) {
-                                            if ( $request->getPut('level') != $result['level'] ) {
-                                                $users->setLevel($request->getPut('level'));
-                                            } else {
-                                                $users->setLevel($result['level']);
-                                            }
-
-                                            if ( $request->getPut('situation') != $result['situation'] ) {
-                                                $users->setSituation($request->getPut('situation'));
-                                            } else {
-                                                $users->setSituation($result['situation']);
-                                            }
-                                        } else {
-                                            $users->setLevel(5);
-                                            $users->setSituation(1);
-                                        }
-                    
-                                        $sql = '
-                                            UPDATE
-                                                users
-                                            SET
-                                                name      = :name,
-                                                email     = :email,
-                                                level     = :level,
-                                                situation = :situation
-                                            WHERE
-                                                id        = :id
-                                        ';
-                    
-                                        try {
-                                            $this->db->begin();
-                    
-                                            $update = $this->db->execute(
-                                                $sql,
+                                    if ( $row_role == 1 ) {
+                                        if ( $role['situation'] == 1 ) {
+                                            $sql_verify_user = '
+                                                SELECT
+                                                    *
+                                                FROM
+                                                    users
+                                                WHERE
+                                                    id = :id;
+                                            ';
+                            
+                                            $query = $this->db->query(
+                                                $sql_verify_user,
                                                 [
-                                                    'name'      => $users->getName(),
-                                                    'email'     => $users->getEmail(),
-                                                    'level'     => $users->getLevel(),
-                                                    'situation' => $users->getSituation(),
-                                                    'id'        => $users->getId()
+                                                    'id' => $users->getId()
                                                 ]
                                             );
-                    
-                                            if ( $update ) {
-                                                if ( $result['email'] != $users->getEmail() || $result['level'] != $users->getLevel() || $result['situation'] != $users->getSituation() ) {
-                                                    if ( $this->redis->exists($user->getEmail()) ) {
-                                                        $this->redis->del($user->getEmail());
-                                                    }
-                                                }
-                    
-                                                if ( $result['name'] != $users->getName() || $result['email'] != $users->getEmail() ||
-                                                    $result['level'] != $users->getLevel() || $result['situation'] != $users->getSituation() ) {
-                                                    $contents = [
-                                                        'msg' => 'Usuário atualizado com sucesso!'
-                                                    ];
                             
-                                                    $response
-                                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 200)
-                                                        ->send();
+                                            $result = $query->fetch();
+                            
+                                            if ( ( ($request->getPut('name') != $result['name']) || ($request->getPut('email') != $result['email']) ||
+                                                   ($request->getPut('level') != $result['level']) || ($request->getPut('situation') != $result['situation']) ) ) {
+                                                if ( $request->getPut('name') != $result['name'] ) {
+                                                    $users->setName($request->getPut('name'));
                                                 } else {
-                                                    $contents = [
-                                                        'msg' => 'Usuário não foi atualizado, pois os campos estão com valores iguais!'
-                                                    ];
+                                                    $users->setName($result['name']);
+                                                }
+    
+                                                $sql_verify_email = '
+                                                    SELECT
+                                                        email
+                                                    FROM
+                                                        users
+                                                    WHERE
+                                                        email = :email;
+                                                ';
+    
+                                                $query_email = $this->db->query(
+                                                    $sql_verify_email,
+                                                    [
+                                                        'email' => $request->getPut('email')
+                                                    ]
+                                                );
+    
+                                                $row = $query_email->numRows();
                             
+                                                if ( $request->getPut('email') != $result['email'] && $row < 1 ) {
+                                                    $users->setEmail($request->getPut('email'));
+                                                } else {
+                                                    $users->setEmail($result['email']);
+                                                }
+                                                
+                                                if ( intval($token_array['level']) == 1 || intval($token_array['level']) == 2 ) {
+                                                    if ( $request->getPut('level') != $result['level'] ) {
+                                                        $users->setLevel($request->getPut('level'));
+                                                    } else {
+                                                        $users->setLevel($result['level']);
+                                                    }
+    
+                                                    if ( $request->getPut('situation') != $result['situation'] ) {
+                                                        $users->setSituation($request->getPut('situation'));
+                                                    } else {
+                                                        $users->setSituation($result['situation']);
+                                                    }
+                                                } else {
+                                                    $users->setLevel(5);
+                                                    $users->setSituation(1);
+                                                }
+                            
+                                                $sql = '
+                                                    UPDATE
+                                                        users
+                                                    SET
+                                                        name      = :name,
+                                                        email     = :email,
+                                                        level     = :level,
+                                                        situation = :situation
+                                                    WHERE
+                                                        id        = :id
+                                                ';
+                            
+                                                try {
+                                                    $this->db->begin();
+                            
+                                                    $update = $this->db->execute(
+                                                        $sql,
+                                                        [
+                                                            'name'      => $users->getName(),
+                                                            'email'     => $users->getEmail(),
+                                                            'level'     => $users->getLevel(),
+                                                            'situation' => $users->getSituation(),
+                                                            'id'        => $users->getId()
+                                                        ]
+                                                    );
+                            
+                                                    if ( $update ) {
+                                                        if ( $result['email'] != $users->getEmail() || $result['level'] != $users->getLevel() ||
+                                                             $result['situation'] != $users->getSituation() ) {
+                                                            if ( $this->redis->exists($user->getEmail()) ) {
+                                                                $this->redis->del($user->getEmail());
+                                                            }
+                                                        }
+                            
+                                                        $contents = [
+                                                            'msg' => 'Usuário atualizado com sucesso!'
+                                                        ];
+                                
+                                                        $response
+                                                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 200)
+                                                            ->send();
+                                                    } else {
+                                                        $contents = [
+                                                            'msg' => 'Não foi possível atualizar usuário!'
+                                                        ];
+                                
+                                                        $response
+                                                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                                            ->send();
+                                                    }
+                            
+                                                    $this->db->commit();
+                                                } catch (Exception $error) {
+                                                    $this->db->rollback();
+                            
+                                                    $contents = [
+                                                        'msg' => 'Ocorreu um erro em nosso servidor, tente mais tarde!'
+                                                    ];
+                                    
                                                     $response
-                                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 500)
                                                         ->send();
                                                 }
                                             } else {
                                                 $contents = [
-                                                    'msg' => 'Não foi possível atualizar usuário!'
+                                                    'msg' => 'Preencha pelo menos um campo com valor diferente do atual!'
                                                 ];
-                        
+                                
                                                 $response
                                                     ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
                                                     ->send();
                                             }
-                    
-                                            $this->db->commit();
-                                        } catch (Exception $error) {
-                                            $this->db->rollback();
-                    
+                                        } else {
                                             $contents = [
-                                                'msg' => 'Ocorreu um erro em nosso servidor, tente mais tarde!'
+                                                'msg' => 'Cargo não está ativo, faça a ativação ou escolha outro!'
                                             ];
-                            
+    
                                             $response
-                                                ->setJsonContent($contents, JSON_PRETTY_PRINT, 500)
+                                                ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
                                                 ->send();
                                         }
                                     } else {
                                         $contents = [
-                                            'msg' => 'Preencha pelo menos um campo com valor diferente do atual!'
+                                            'msg' => 'Cargo não encontrado!'
                                         ];
                         
                                         $response
@@ -787,7 +814,7 @@
                                     }
                                 } else {
                                     $contents = [
-                                        'msg' => 'Cargo não encontrado!'
+                                        'msg' => 'Dados incompletos!'
                                     ];
                     
                                     $response
@@ -800,7 +827,7 @@
                                 ];
                 
                                 $response
-                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
                                     ->send();
                             }
                         } else {
