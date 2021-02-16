@@ -419,131 +419,148 @@
                     if ( date(\DateTime::ISO8601) <= $nbf_array ) {
                         if ( intval($token_array['situation']) == 1 ) {
                             if ( intval($token_array['level']) == 1 || intval($token_array['level']) == 2 ) {
-                                if ( !empty($request->get('name')) && !empty($request->get('email')) && !empty($request->get('password')) &&
-                                     !empty($request->get('level')) && !empty($request->get('situation')) ) {
-                                    $sql_verify_email = '
-                                        SELECT
-                                            email
-                                        FROM
-                                            users
-                                        WHERE
-                                            email = :email;
-                                    ';
+                                if ( !empty($request->get('name')) && !empty($request->get('email')) && !empty($request->get('password')) ) {
+                                    if ( !is_numeric($request->get('level') || $request->get('level') < 1) ) {
+                                        $contents = [
+                                            'msg' => 'Valor informado para cargo está diferente do permitido!'
+                                        ];
+                        
+                                        $response
+                                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                            ->send();
+                                    } else if ( (!is_numeric($request->get('situation'))) || ($request->get('situation') != 0 || $request->get('situation') != 1) ) {
+                                        $contents = [
+                                            'msg' => 'Valor informado para situação está diferente do permitido!'
+                                        ];
+                        
+                                        $response
+                                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                            ->send();
+                                    } else {
+                                        $sql_verify_email = '
+                                            SELECT
+                                                email
+                                            FROM
+                                                users
+                                            WHERE
+                                                email = :email;
+                                        ';
 
-                                    try {
-                                        $this->db->begin();
+                                        try {
+                                            $this->db->begin();
 
-                                        $email_verified = $this->db->query(
-                                            $sql_verify_email,
-                                            [
-                                                'email' => $request->get('email')
-                                            ]
-                                        );
-
-                                        if ( $email_verified->numRows() == 1 ) {
-                                            $contents = [
-                                                'msg' => 'Usuário já está cadastrado!'
-                                            ];
-                            
-                                            $response
-                                                ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
-                                                ->send();
-                                        } else {
-                                            $sql_verify_role = '
-                                                SELECT
-                                                    situation
-                                                FROM
-                                                    roles
-                                                WHERE
-                                                    id = :id;
-                                            ';
-
-                                            $role_verified = $this->db->query(
-                                                $sql_verify_role,
+                                            $email_verified = $this->db->query(
+                                                $sql_verify_email,
                                                 [
-                                                    'id' => intval($request->get('level'))
+                                                    'email' => $request->get('email')
                                                 ]
                                             );
 
-                                            $row_role = $role_verified->numRows();
-                                            $role = $role_verified->fetch();
-
-                                            if ( $row_role == 1 ) {
-                                                if ( $role['situation'] == 1 ) {
-                                                    $password_hashed = $security->hash($request->get('password'));
-
-                                                    $users->setName($request->get('name'));
-                                                    $users->setEmail($request->get('email'));
-                                                    $users->setPassword($password_hashed);
-                                                    $users->setLevel(intval($request->get('level')));
-                                                    $users->setSituation(intval($request->get('situation')));
-        
-                                                    $sql = '
-                                                        INSERT INTO users
-                                                            (name, email, password, level, situation)
-                                                        VALUES
-                                                            (:name, :email, :password, :level, :situation);
-                                                    ';
-        
-                                                    $success = $this->db->query(
-                                                        $sql,
-                                                        [
-                                                            'name'      => $users->getName(),
-                                                            'email'     => $users->getEmail(),
-                                                            'password'  => $users->getPassword(),
-                                                            'level'     => $users->getLevel(),
-                                                            'situation' => $users->getSituation(),
-                                                        ]
-                                                    );
+                                            if ( $email_verified->numRows() == 1 ) {
+                                                $contents = [
+                                                    'msg' => 'Usuário já está cadastrado!'
+                                                ];
                                 
-                                                    if ( $success ) {
-                                                        $contents = [
-                                                            'msg' => 'Cadastro realizado com sucesso!'
-                                                        ];
-                                        
-                                                        $response
-                                                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 201)
-                                                            ->send();
+                                                $response
+                                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                                    ->send();
+                                            } else {
+                                                $sql_verify_role = '
+                                                    SELECT
+                                                        situation
+                                                    FROM
+                                                        roles
+                                                    WHERE
+                                                        id = :id;
+                                                ';
+
+                                                $role_verified = $this->db->query(
+                                                    $sql_verify_role,
+                                                    [
+                                                        'id' => intval($request->get('level'))
+                                                    ]
+                                                );
+
+                                                $row_role = $role_verified->numRows();
+                                                $role = $role_verified->fetch();
+
+                                                if ( $row_role == 1 ) {
+                                                    if ( $role['situation'] == 1 ) {
+                                                        $password_hashed = $security->hash($request->get('password'));
+
+                                                        $users->setName($request->get('name'));
+                                                        $users->setEmail($request->get('email'));
+                                                        $users->setPassword($password_hashed);
+                                                        $users->setLevel(intval($request->get('level')));
+                                                        $users->setSituation(intval($request->get('situation')));
+            
+                                                        $sql = '
+                                                            INSERT INTO users
+                                                                (name, email, password, level, situation)
+                                                            VALUES
+                                                                (:name, :email, :password, :level, :situation);
+                                                        ';
+            
+                                                        $success = $this->db->query(
+                                                            $sql,
+                                                            [
+                                                                'name'      => $users->getName(),
+                                                                'email'     => $users->getEmail(),
+                                                                'password'  => $users->getPassword(),
+                                                                'level'     => $users->getLevel(),
+                                                                'situation' => $users->getSituation(),
+                                                            ]
+                                                        );
+                                    
+                                                        if ( $success ) {
+                                                            $contents = [
+                                                                'msg' => 'Cadastro realizado com sucesso!'
+                                                            ];
+                                            
+                                                            $response
+                                                                ->setJsonContent($contents, JSON_PRETTY_PRINT, 201)
+                                                                ->send();
+                                                        } else {
+                                                            $contents = [
+                                                                'msg' => 'Falha no cadastro!'
+                                                            ];
+                                            
+                                                            $response
+                                                                ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                                                ->send();
+                                                        }
                                                     } else {
                                                         $contents = [
-                                                            'msg' => 'Falha no cadastro!'
+                                                            'msg' => 'Cargo não está ativo, faça a ativação ou escolha outro!'
                                                         ];
-                                        
+                
                                                         $response
                                                             ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
                                                             ->send();
                                                     }
                                                 } else {
                                                     $contents = [
-                                                        'msg' => 'Cargo não está ativo, faça a ativação ou escolha outro!'
+                                                        'msg' => 'Cargo não encontrado!'
                                                     ];
-            
+                                    
                                                     $response
                                                         ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
                                                         ->send();
                                                 }
-                                            } else {
-                                                $contents = [
-                                                    'msg' => 'Cargo não encontrado!'
-                                                ];
-                                
-                                                $response
-                                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
-                                                    ->send();
                                             }
+
+                                            $this->db->commit();
+                                        } catch (Exception $error) {
+                                            $this->db->rollback();
+
+                                            $contents = [
+                                                'msg' => 'Ocorreu um erro em nosso servidor, tente mais tarde!'
+                                            ];
+                            
+                                            $response
+                                                ->setJsonContent($contents, JSON_PRETTY_PRINT, 500)
+                                                ->send();
                                         }
-
-                                        $this->db->commit();
-                                    } catch (Exception $error) {
-                                        $this->db->rollback();
-
-                                        $contents = [
-                                            'msg' => 'Ocorreu um erro em nosso servidor, tente mais tarde!'
-                                        ];
-                        
-                                        $response
-                                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 500)
-                                            ->send();
                                     }
                                 } else {
                                     $contents = [
@@ -634,69 +651,79 @@
                             }
 
                             if ( intval($token_array['id']) == $users->getId() || (intval($token_array['level']) == 1 || intval($token_array['level']) == 2) ) {
-                                if ( !empty($request->getPut('name')) && !empty($request->getPut('email')) && is_numeric(intval($request->getPut('situation'))) ) {
-                                    if ( $request->getPut('situation') == 0 || $request->getPut('situation') == 1 ) {
-                                        $sql_verify_role = '
+                                if ( !empty($request->getPut('name')) && !empty($request->getPut('email')) ) {
+                                    if ( ( intval($token_array['level']) != 1 && intval($token_array['level']) != 2 ) ||
+                                         ( (intval($token_array['level']) == 1 || intval($token_array['level']) == 2) &&
+                                           (intval($request->getPut('level')) > 0 && ((is_numeric($request->getPut('situation'))) &&
+                                           (intval($request->getPut('situation')) == 0 || intval($request->getPut('situation')) == 1))) ) ) {
+                                        $sql_verify_user = '
                                             SELECT
-                                                situation
+                                                *
                                             FROM
-                                                roles
+                                                users
                                             WHERE
                                                 id = :id;
                                         ';
                         
-                                        $role_verified = $this->db->query(
-                                            $sql_verify_role,
+                                        $query = $this->db->query(
+                                            $sql_verify_user,
                                             [
-                                                'id' => $request->getPut('level')
+                                                'id' => $users->getId()
                                             ]
                                         );
-        
-                                        $row_role = $role_verified->numRows();
-                                        $role = $role_verified->fetch();
                         
-                                        if ( $row_role == 1 ) {
-                                            if ( $role['situation'] == 1 ) {
-                                                $sql_verify_user = '
-                                                    SELECT
-                                                        *
-                                                    FROM
-                                                        users
-                                                    WHERE
-                                                        id = :id;
-                                                ';
-                                
-                                                $query = $this->db->query(
-                                                    $sql_verify_user,
-                                                    [
-                                                        'id' => $users->getId()
-                                                    ]
-                                                );
-                                
-                                                $result = $query->fetch();
+                                        $result = $query->fetch();
 
-                                                $sql_verify_email = '
-                                                    SELECT
-                                                        email
-                                                    FROM
-                                                        users
-                                                    WHERE
-                                                        id != :id AND email = :email;
-                                                ';
-    
-                                                $query_email = $this->db->query(
-                                                    $sql_verify_email,
-                                                    [
-                                                        'id'    => $users->getId(),
-                                                        'email' => $request->getPut('email')
-                                                    ]
-                                                );
-    
-                                                $row_email = $query_email->numRows();
+                                        if ( ($request->getPut('name') != $result['name']) || ($request->getPut('email') != $result['email']) ||
+                                             ( (intval($token_array['level']) == 1 || intval($token_array['level']) == 2) &&
+                                               (($request->getPut('level') != $result['level']) || ($request->getPut('situation') != $result['situation'])) ) ) {
+                                            if ( ( intval($token_array['id']) == $users->getId() && (intval($token_array['level']) != 1 || intval($token_array['level']) != 2) ) ) {
+                                                $level = $token_array['level'];
+                                            } else {
+                                                $level = intval($request->getPut('level'));
+                                            }
+        
+                                            $sql_verify_role = '
+                                                SELECT
+                                                    situation
+                                                FROM
+                                                    roles
+                                                WHERE
+                                                    id = :id;
+                                            ';
                             
-                                                if ( $row_email == 0 ) {
-                                                    if ( ( ($request->getPut('name') != $result['name']) || ($request->getPut('email') != $result['email']) ||
-                                                           ($request->getPut('level') != $result['level']) || ($request->getPut('situation') != $result['situation']) ) ) {
+                                            $role_verified = $this->db->query(
+                                                $sql_verify_role,
+                                                [
+                                                    'id' => $level
+                                                ]
+                                            );
+            
+                                            $row_role = $role_verified->numRows();
+                                            $role = $role_verified->fetch();
+                            
+                                            if ( $row_role == 1 ) {
+                                                if ( $role['situation'] == 1 ) {
+                                                    $sql_verify_email = '
+                                                        SELECT
+                                                            email
+                                                        FROM
+                                                            users
+                                                        WHERE
+                                                            id != :id AND email = :email;
+                                                    ';
+        
+                                                    $query_email = $this->db->query(
+                                                        $sql_verify_email,
+                                                        [
+                                                            'id'    => $users->getId(),
+                                                            'email' => $request->getPut('email')
+                                                        ]
+                                                    );
+        
+                                                    $row_email = $query_email->numRows();
+                                
+                                                    if ( $row_email == 0 ) {
                                                         if ( $request->getPut('name') != $result['name'] ) {
                                                             $users->setName($request->getPut('name'));
                                                         } else {
@@ -708,7 +735,7 @@
                                                         } else {
                                                             $users->setEmail($result['email']);
                                                         }
-                                                        
+    
                                                         if ( intval($token_array['level']) == 1 || intval($token_array['level']) == 2 ) {
                                                             if ( $request->getPut('level') != $result['level'] ) {
                                                                 $users->setLevel($request->getPut('level'));
@@ -791,16 +818,16 @@
                                                         }
                                                     } else {
                                                         $contents = [
-                                                            'msg' => 'Preencha pelo menos um campo com valor diferente do atual!'
+                                                            'msg' => 'Já existe um usuário cadastrado com esse e-mail!'
                                                         ];
-                                        
+                
                                                         $response
                                                             ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
                                                             ->send();
                                                     }
                                                 } else {
                                                     $contents = [
-                                                        'msg' => 'Já existe um usuário cadastrado com esse e-mail!'
+                                                        'msg' => 'Cargo não está ativo, faça a ativação ou escolha outro!'
                                                     ];
             
                                                     $response
@@ -809,16 +836,16 @@
                                                 }
                                             } else {
                                                 $contents = [
-                                                    'msg' => 'Cargo não está ativo, faça a ativação ou escolha outro!'
+                                                    'msg' => 'Cargo não encontrado!'
                                                 ];
-        
+                                
                                                 $response
                                                     ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
                                                     ->send();
                                             }
                                         } else {
                                             $contents = [
-                                                'msg' => 'Cargo não encontrado!'
+                                                'msg' => 'Preencha pelo menos um campo com valor diferente do atual!'
                                             ];
                             
                                             $response
@@ -826,13 +853,24 @@
                                                 ->send();
                                         }
                                     } else {
-                                        $contents = [
-                                            'msg' => 'Valor informado é diferente do permitido!'
-                                        ];
-                        
-                                        $response
-                                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
-                                            ->send();
+                                        if ( ( intval($token_array['level']) == 1 || intval($token_array['level']) == 2 ) &&
+                                             ( !is_numeric($request->getPut('level')) || intval($request->getPut('level')) < 1 ) ) {
+                                            $contents = [
+                                                'msg' => 'Valor informado para cargo está diferente do permitido!'
+                                            ];
+                            
+                                            $response
+                                                ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                                ->send();
+                                        } else {
+                                            $contents = [
+                                                'msg' => 'Valor informado para situação está diferente do permitido!'
+                                            ];
+                            
+                                            $response
+                                                ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                                ->send();
+                                        }
                                     }
                                 } else {
                                     $contents = [
