@@ -307,104 +307,114 @@
                     if ( date(\DateTime::ISO8601) <= $nbf_array ) {
                         if ( intval($token_array['situation']) == 1 ) {
                             if ( intval($token_array['level']) == 1 || intval($token_array['level']) == 4 ) {
-                                if ( !empty($request->getPut('name')) && !empty($request->getPut('stock')) && !empty($request->getPut('situation')) ) {
-                                    $sql_verify_raw_material = '
-                                        SELECT
-                                            *
-                                        FROM
-                                            raw_materials
-                                        WHERE
-                                            id = :id;
-                                    ';
+                                if ( !empty($request->getPut('name')) && !empty($request->getPut('stock')) && is_numeric(intval($request->getPut('situation'))) ) {
+                                    if ( $request->getPut('situation') == 0 || $request->getPut('situation') == 1 ) {
+                                        $sql_verify_raw_material = '
+                                            SELECT
+                                                *
+                                            FROM
+                                                raw_materials
+                                            WHERE
+                                                id = :id;
+                                        ';
 
-                                    $query_verify_raw_material = $this->db->query(
-                                        $sql_verify_raw_material,
-                                        [
-                                            'id' => $id
-                                        ]
-                                    );
+                                        $query_verify_raw_material = $this->db->query(
+                                            $sql_verify_raw_material,
+                                            [
+                                                'id' => $id
+                                            ]
+                                        );
 
-                                    $row = $query_verify_raw_material->numRows();
-                                    $result = $query_verify_raw_material->fetch();
+                                        $row = $query_verify_raw_material->numRows();
+                                        $result = $query_verify_raw_material->fetch();
 
-                                    if ( $row == 1 ) {
-                                        if ( $request->getPut('name') != $result['name'] || $request->getPut('stock') != $result['stock'] ||
-                                             $request->getPut('situation') != $result['situation'] ) {
-                                            $raw_materials->setId($id);
+                                        if ( $row == 1 ) {
+                                            if ( $request->getPut('name') != $result['name'] || $request->getPut('stock') != $result['stock'] ||
+                                                $request->getPut('situation') != $result['situation'] ) {
+                                                $raw_materials->setId($id);
 
-                                            if ( $request->getPut('name') != $result['name'] ) {
-                                                $raw_materials->setName($request->getPut('name'));
-                                            } else {
-                                                $raw_materials->setName($result['name']);
-                                            }
-        
-                                            if ( $request->getPut('stock') != $result['stock'] ) {
-                                                $raw_materials->setStock(intval($request->getPut('stock')));
-                                            } else {
-                                                $raw_materials->setStock($result['stock']);
-                                            }
-
-                                            if ( $request->getPut('situation') != $result['situation'] ) {
-                                                $raw_materials->setSituation(intval($request->getPut('situation')));
-                                            } else {
-                                                $raw_materials->setSituation($result['situation']);
-                                            }
-
-                                            $sql = '
-                                                UPDATE
-                                                    raw_materials
-                                                SET
-                                                    name = :name, stock = :stock, situation = :situation
-                                                WHERE
-                                                    id = :id;
-                                            ';
-        
-                                            try {
-                                                $this->db->begin();
-        
-                                                $update = $this->db->execute(
-                                                    $sql,
-                                                    [
-                                                        'id'        => $raw_materials->getId(),
-                                                        'name'      => $raw_materials->getName(),
-                                                        'stock'     => $raw_materials->getStock(),
-                                                        'situation' => $raw_materials->getSituation()
-                                                    ]
-                                                );
-        
-                                                if ( $update ) {
-                                                    $contents = [
-                                                        'msg' => 'Matéria-prima alterada com sucesso!'
-                                                    ];
-                            
-                                                    $response
-                                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 200)
-                                                        ->send();
+                                                if ( $request->getPut('name') != $result['name'] ) {
+                                                    $raw_materials->setName($request->getPut('name'));
                                                 } else {
-                                                    $contents = [
-                                                        'msg' => 'Falha na alteração da matéria-prima!'
-                                                    ];
+                                                    $raw_materials->setName($result['name']);
+                                                }
+            
+                                                if ( $request->getPut('stock') != $result['stock'] ) {
+                                                    $raw_materials->setStock(intval($request->getPut('stock')));
+                                                } else {
+                                                    $raw_materials->setStock($result['stock']);
+                                                }
+
+                                                if ( $request->getPut('situation') != $result['situation'] ) {
+                                                    $raw_materials->setSituation(intval($request->getPut('situation')));
+                                                } else {
+                                                    $raw_materials->setSituation($result['situation']);
+                                                }
+
+                                                $sql = '
+                                                    UPDATE
+                                                        raw_materials
+                                                    SET
+                                                        name = :name, stock = :stock, situation = :situation
+                                                    WHERE
+                                                        id = :id;
+                                                ';
+            
+                                                try {
+                                                    $this->db->begin();
+            
+                                                    $update = $this->db->execute(
+                                                        $sql,
+                                                        [
+                                                            'id'        => $raw_materials->getId(),
+                                                            'name'      => $raw_materials->getName(),
+                                                            'stock'     => $raw_materials->getStock(),
+                                                            'situation' => $raw_materials->getSituation()
+                                                        ]
+                                                    );
+            
+                                                    if ( $update ) {
+                                                        $contents = [
+                                                            'msg' => 'Matéria-prima alterada com sucesso!'
+                                                        ];
+                                
+                                                        $response
+                                                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 200)
+                                                            ->send();
+                                                    } else {
+                                                        $contents = [
+                                                            'msg' => 'Falha na alteração da matéria-prima!'
+                                                        ];
+                                
+                                                        $response
+                                                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                                            ->send();
+                                                    }
+            
+                                                    $this->db->commit();
+                                                } catch (Exception $error) {
+                                                    $this->db->rollback();
                             
+                                                    $contents = [
+                                                        'msg' => 'Ocorreu um erro em nosso servidor, tente mais tarde!'
+                                                    ];
+                                    
                                                     $response
-                                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 500)
                                                         ->send();
                                                 }
-        
-                                                $this->db->commit();
-                                            } catch (Exception $error) {
-                                                $this->db->rollback();
-                        
+                                            } else {
                                                 $contents = [
-                                                    'msg' => 'Ocorreu um erro em nosso servidor, tente mais tarde!'
+                                                    'msg' => 'Digite pelo menos um campo com valor diferente do atual!'
                                                 ];
                                 
                                                 $response
-                                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 500)
+                                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
                                                     ->send();
                                             }
                                         } else {
                                             $contents = [
-                                                'msg' => 'Digite pelo menos um campo com valor diferente do atual!'
+                                                'msg' => 'Matéria-prima não encontrada!'
                                             ];
                             
                                             $response
@@ -413,7 +423,7 @@
                                         }
                                     } else {
                                         $contents = [
-                                            'msg' => 'Matéria-prima não encontrada!'
+                                            'msg' => 'Valor informado é diferente do permitido!'
                                         ];
                         
                                         $response

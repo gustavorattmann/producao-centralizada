@@ -305,97 +305,107 @@
                     if ( date(\DateTime::ISO8601) <= $nbf_array ) {
                         if ( intval($token_array['situation']) == 1 ) {
                             if ( intval($token_array['level']) == 1 || intval($token_array['level']) == 3 ) {
-                                if ( !empty($request->getPut('name')) && !empty($request->getPut('situation')) ) {
-                                    $sql_verify_category = '
-                                        SELECT
-                                            name, situation
-                                        FROM
-                                            category
-                                        WHERE
-                                            id = :id
-                                    ';
+                                if ( !empty($request->getPut('name')) && is_numeric(intval($request->getPut('situation'))) ) {
+                                    if ( $request->getPut('situation') == 0 || $request->getPut('situation') == 1 ) {
+                                        $sql_verify_category = '
+                                            SELECT
+                                                name, situation
+                                            FROM
+                                                category
+                                            WHERE
+                                                id = :id
+                                        ';
 
-                                    $query = $this->db->query(
-                                        $sql_verify_category,
-                                        [
-                                            'id' => $id
-                                        ]
-                                    );
+                                        $query = $this->db->query(
+                                            $sql_verify_category,
+                                            [
+                                                'id' => $id
+                                            ]
+                                        );
 
-                                    $row = $query->numRows();
-                                    $result = $query->fetch();
+                                        $row = $query->numRows();
+                                        $result = $query->fetch();
 
-                                    if ( $row == 1 ) {
-                                        if ( $request->getPut('name') != $result['name'] || intval($request->getPut('situation')) != $result['situation'] ) {
-                                            $category->setId($id);
-                                        
-                                            if ( $request->getPut('name') != $result['name'] ) {
-                                                $category->setName($request->getPut('name'));
-                                            } else {
-                                                $category->setName($result['name']);
-                                            }
-
-                                            if ( intval($request->getPut('situation')) != $result['situation'] ) {
-                                                $category->setSituation(intval($request->getPut('situation')));
-                                            } else {
-                                                $category->setSituation($result['situation']);
-                                            }
-
-                                            $sql = '
-                                                UPDATE
-                                                    category
-                                                SET
-                                                    name = :name,
-                                                    situation = :situation
-                                                WHERE
-                                                    id = :id
-                                            ';
-
-                                            try {
-                                                $this->db->begin();
-
-                                                $update = $this->db->execute(
-                                                    $sql,
-                                                    [
-                                                        'id'        => $category->getId(),
-                                                        'name'      => $category->getName(),
-                                                        'situation' => $category->getSituation()
-                                                    ]
-                                                );
-
-                                                if ( $update ) {
-                                                    $contents = [
-                                                        'msg' => 'Categoria alterada com sucesso!'
-                                                    ];
-                                    
-                                                    $response
-                                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 201)
-                                                        ->send();
+                                        if ( $row == 1 ) {
+                                            if ( $request->getPut('name') != $result['name'] || intval($request->getPut('situation')) != $result['situation'] ) {
+                                                $category->setId($id);
+                                            
+                                                if ( $request->getPut('name') != $result['name'] ) {
+                                                    $category->setName($request->getPut('name'));
                                                 } else {
-                                                    $contents = [
-                                                        'msg' => 'Falha na alteração da categoria!'
-                                                    ];
-                                    
-                                                    $response
-                                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
-                                                        ->send();
+                                                    $category->setName($result['name']);
                                                 }
 
-                                                $this->db->commit();
-                                            } catch (Exception $error) {
-                                                $this->db->rollback();
-                    
+                                                if ( intval($request->getPut('situation')) != $result['situation'] ) {
+                                                    $category->setSituation(intval($request->getPut('situation')));
+                                                } else {
+                                                    $category->setSituation($result['situation']);
+                                                }
+
+                                                $sql = '
+                                                    UPDATE
+                                                        category
+                                                    SET
+                                                        name = :name,
+                                                        situation = :situation
+                                                    WHERE
+                                                        id = :id
+                                                ';
+
+                                                try {
+                                                    $this->db->begin();
+
+                                                    $update = $this->db->execute(
+                                                        $sql,
+                                                        [
+                                                            'id'        => $category->getId(),
+                                                            'name'      => $category->getName(),
+                                                            'situation' => $category->getSituation()
+                                                        ]
+                                                    );
+
+                                                    if ( $update ) {
+                                                        $contents = [
+                                                            'msg' => 'Categoria alterada com sucesso!'
+                                                        ];
+                                        
+                                                        $response
+                                                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 201)
+                                                            ->send();
+                                                    } else {
+                                                        $contents = [
+                                                            'msg' => 'Falha na alteração da categoria!'
+                                                        ];
+                                        
+                                                        $response
+                                                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                                            ->send();
+                                                    }
+
+                                                    $this->db->commit();
+                                                } catch (Exception $error) {
+                                                    $this->db->rollback();
+                        
+                                                    $contents = [
+                                                        'msg' => 'Ocorreu um erro em nosso servidor, tente mais tarde!'
+                                                    ];
+                                    
+                                                    $response
+                                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 500)
+                                                        ->send();
+                                                }
+                                            } else {
                                                 $contents = [
-                                                    'msg' => 'Ocorreu um erro em nosso servidor, tente mais tarde!'
+                                                    'msg' => 'Preencha pelo menos um campo com valor diferente do atual!'
                                                 ];
                                 
                                                 $response
-                                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 500)
+                                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
                                                     ->send();
                                             }
                                         } else {
                                             $contents = [
-                                                'msg' => 'Preencha pelo menos um campo com valor diferente do atual!'
+                                                'msg' => 'Categoria não encontrada!'
                                             ];
                             
                                             $response
@@ -404,7 +414,7 @@
                                         }
                                     } else {
                                         $contents = [
-                                            'msg' => 'Categoria não encontrada!'
+                                            'msg' => 'Valor informado é diferente do permitido!'
                                         ];
                         
                                         $response

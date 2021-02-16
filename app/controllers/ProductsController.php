@@ -350,143 +350,153 @@
                     if ( date(\DateTime::ISO8601) <= $nbf_array ) {
                         if ( intval($token_array['situation']) == 1 ) {
                             if ( intval($token_array['level']) == 1 || intval($token_array['level']) == 3 ) {
-                                if ( !empty($request->getPut('name')) && !empty($request->getPut('category')) && !empty($request->getPut('situation')) ) {
-                                    $sql_verify_product = '
-                                        SELECT
-                                            *
-                                        FROM
-                                            products
-                                        WHERE
-                                            id = :id;
-                                    ';
-
-                                    $query_verify_product = $this->db->query(
-                                        $sql_verify_product,
-                                        [
-                                            'id' => $id
-                                        ]
-                                    );
-
-                                    $row = $query_verify_product->numRows();
-                                    $result = $query_verify_product->fetch();
-
-                                    if ( $row == 1 ) {
-                                        $sql_verify_category = '
+                                if ( !empty($request->getPut('name')) && !empty($request->getPut('category')) && is_numeric(intval($request->getPut('situation'))) ) {
+                                    if ( $request->getPut('situation') == 0 || $request->getPut('situation') == 1 ) {
+                                        $sql_verify_product = '
                                             SELECT
                                                 *
                                             FROM
-                                                category
+                                                products
                                             WHERE
                                                 id = :id;
                                         ';
 
-                                        $query_verify_category = $this->db->query(
-                                            $sql_verify_category,
+                                        $query_verify_product = $this->db->query(
+                                            $sql_verify_product,
                                             [
-                                                'id' => $request->getPut('category')
+                                                'id' => $id
                                             ]
                                         );
 
-                                        $row_category = $query_verify_category->numRows();
-                                        $category = $query_verify_category->fetch();
+                                        $row = $query_verify_product->numRows();
+                                        $result = $query_verify_product->fetch();
 
-                                        if ( $row_category == 1 ) {
-                                            if ( $category['situation'] == 1 ) {
-                                                if ( $request->getPut('name') != $result['name'] || $request->getPut('category') != $result['category'] ||
-                                                     $request->getPut('situation') != $result['situation'] ) {
-                                                    $products->setId($id);
+                                        if ( $row == 1 ) {
+                                            $sql_verify_category = '
+                                                SELECT
+                                                    *
+                                                FROM
+                                                    category
+                                                WHERE
+                                                    id = :id;
+                                            ';
 
-                                                    if ( $request->getPut('name') != $result['name'] ) {
-                                                        $products->setName($request->getPut('name'));
-                                                    } else {
-                                                        $products->setName($result['name']);
-                                                    }
-                
-                                                    if ( $request->getPut('category') != $result['category'] ) {
-                                                        $products->setCategory(intval($request->getPut('category')));
-                                                    } else {
-                                                        $products->setCategory($result['category']);
-                                                    }
+                                            $query_verify_category = $this->db->query(
+                                                $sql_verify_category,
+                                                [
+                                                    'id' => $request->getPut('category')
+                                                ]
+                                            );
 
-                                                    if ( $request->getPut('situation') != $result['situation'] ) {
-                                                        $products->setSituation(intval($request->getPut('situation')));
-                                                    } else {
-                                                        $products->setSituation($result['situation']);
-                                                    }
-        
-                                                    $sql = '
-                                                        UPDATE
-                                                            products
-                                                        SET
-                                                            name = :name, category = :category, situation = :situation
-                                                        WHERE
-                                                            id = :id;
-                                                    ';
-                
-                                                    try {
-                                                        $this->db->begin();
-                
-                                                        $update = $this->db->execute(
-                                                            $sql,
-                                                            [
-                                                                'id'        => $products->getId(),
-                                                                'name'      => $products->getName(),
-                                                                'category'  => $products->getCategory(),
-                                                                'situation' => $products->getSituation()
-                                                            ]
-                                                        );
-                
-                                                        if ( $update ) {
-                                                            $contents = [
-                                                                'msg' => 'Produto alterado com sucesso!'
-                                                            ];
-                                    
-                                                            $response
-                                                                ->setJsonContent($contents, JSON_PRETTY_PRINT, 200)
-                                                                ->send();
+                                            $row_category = $query_verify_category->numRows();
+                                            $category = $query_verify_category->fetch();
+
+                                            if ( $row_category == 1 ) {
+                                                if ( $category['situation'] == 1 ) {
+                                                    if ( $request->getPut('name') != $result['name'] || $request->getPut('category') != $result['category'] ||
+                                                        $request->getPut('situation') != $result['situation'] ) {
+                                                        $products->setId($id);
+
+                                                        if ( $request->getPut('name') != $result['name'] ) {
+                                                            $products->setName($request->getPut('name'));
                                                         } else {
-                                                            $contents = [
-                                                                'msg' => 'Falha na alteração do produto!'
-                                                            ];
+                                                            $products->setName($result['name']);
+                                                        }
+                    
+                                                        if ( $request->getPut('category') != $result['category'] ) {
+                                                            $products->setCategory(intval($request->getPut('category')));
+                                                        } else {
+                                                            $products->setCategory($result['category']);
+                                                        }
+
+                                                        if ( $request->getPut('situation') != $result['situation'] ) {
+                                                            $products->setSituation(intval($request->getPut('situation')));
+                                                        } else {
+                                                            $products->setSituation($result['situation']);
+                                                        }
+            
+                                                        $sql = '
+                                                            UPDATE
+                                                                products
+                                                            SET
+                                                                name = :name, category = :category, situation = :situation
+                                                            WHERE
+                                                                id = :id;
+                                                        ';
+                    
+                                                        try {
+                                                            $this->db->begin();
+                    
+                                                            $update = $this->db->execute(
+                                                                $sql,
+                                                                [
+                                                                    'id'        => $products->getId(),
+                                                                    'name'      => $products->getName(),
+                                                                    'category'  => $products->getCategory(),
+                                                                    'situation' => $products->getSituation()
+                                                                ]
+                                                            );
+                    
+                                                            if ( $update ) {
+                                                                $contents = [
+                                                                    'msg' => 'Produto alterado com sucesso!'
+                                                                ];
+                                        
+                                                                $response
+                                                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 200)
+                                                                    ->send();
+                                                            } else {
+                                                                $contents = [
+                                                                    'msg' => 'Falha na alteração do produto!'
+                                                                ];
+                                        
+                                                                $response
+                                                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                                                    ->send();
+                                                            }
+                    
+                                                            $this->db->commit();
+                                                        } catch (Exception $error) {
+                                                            $this->db->rollback();
                                     
+                                                            $contents = [
+                                                                'msg' => 'Ocorreu um erro em nosso servidor, tente mais tarde!'
+                                                            ];
+                                            
                                                             $response
-                                                                ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                                                ->setJsonContent($contents, JSON_PRETTY_PRINT, 500)
                                                                 ->send();
                                                         }
-                
-                                                        $this->db->commit();
-                                                    } catch (Exception $error) {
-                                                        $this->db->rollback();
-                                
+                                                    } else {
                                                         $contents = [
-                                                            'msg' => 'Ocorreu um erro em nosso servidor, tente mais tarde!'
+                                                            'msg' => 'Digite pelo menos um campo com valor diferente do atual!'
                                                         ];
                                         
                                                         $response
-                                                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 500)
+                                                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
                                                             ->send();
                                                     }
                                                 } else {
                                                     $contents = [
-                                                        'msg' => 'Digite pelo menos um campo com valor diferente do atual!'
+                                                        'msg' => 'Categoria não está ativa, contate um responsável pelo setor de almoxarifado!'
                                                     ];
-                                    
+            
                                                     $response
                                                         ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
                                                         ->send();
                                                 }
                                             } else {
                                                 $contents = [
-                                                    'msg' => 'Categoria não está ativa, contate um responsável pelo setor de almoxarifado!'
+                                                    'msg' => 'Categoria não encontrada!'
                                                 ];
-        
+                                
                                                 $response
                                                     ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
                                                     ->send();
                                             }
                                         } else {
                                             $contents = [
-                                                'msg' => 'Categoria não encontrada!'
+                                                'msg' => 'Produto não encontrado!'
                                             ];
                             
                                             $response
@@ -495,7 +505,7 @@
                                         }
                                     } else {
                                         $contents = [
-                                            'msg' => 'Produto não encontrado!'
+                                            'msg' => 'Valor informado é diferente do permitido!'
                                         ];
                         
                                         $response
