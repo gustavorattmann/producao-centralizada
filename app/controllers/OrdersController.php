@@ -34,47 +34,157 @@
 
                     if ( date(\DateTime::ISO8601) <= $nbf_array ) {
                         if ( intval($token_array['situation']) == 1 ) {
-                            if ( intval($token_array['level']) == 1 || intval($token_array['level']) == 3 ) {
-                                $sql = '
-                                    SELECT
-                                        o.id AS id,
-                                        u.solicitor AS solicitor,
-                                        u.designated AS designated,
-                                        p.name AS product,
-                                        c.name AS category,
-                                        r.name AS raw_material,
-                                        r.stock AS stock,
-                                        o.quantity_product_requested AS quantity_product_requested,
-                                        o.quantity_raw_material_limit AS quantity_raw_material_limit,
-                                        o.status_order AS status,
-                                        o.date_initial AS date_created,
-                                        o.date_final AS date_updated
-                                    FROM
-                                        orders o
-                                    INNER JOIN
-                                        users u
-                                    ON
-                                        o.user = u.id
-                                    INNER JOIN
-                                        products p
-                                    ON
-                                        o.product = p.id
-                                    INNER JOIN
-                                        raw_materials r
-                                    ON
-                                        o.raw_material = r.id
-                                    INNER JOIN
-                                        status_orders so
-                                    ON
-                                        o.status_order = so.id
-                                    INNER JOIN
-                                        category c
-                                    ON
-                                        p.category = c.id
-                                    ORDER BY o.date_inital DESC;
-                                ';
+                            if ( intval($token_array['level']) == 1 || intval($token_array['level']) == 3 || intval($token_array['level']) == 5 ) {
+                                if ( intval($token_array['level']) == 5 ) {
+                                    $sql = '
+                                        SELECT
+                                            o.id AS id,
+                                            us.name AS solicitor,
+                                            ud.name AS designated,
+                                            p.name AS product,
+                                            c.name AS category,
+                                            r.name AS raw_material,
+                                            r.stock AS stock,
+                                            o.quantity_product_requested AS quantity_product_requested,
+                                            o.quantity_raw_material_limit AS quantity_raw_material_limit,
+                                            o.status_order AS status,
+                                            o.date_initial AS date_created,
+                                            o.date_final AS date_updated
+                                        FROM
+                                            orders o
+                                        INNER JOIN
+                                            users us
+                                        ON
+                                            o.solicitor = us.id
+                                        LEFT JOIN
+                                            users ud
+                                        ON
+                                            o.designated = ud.id
+                                        INNER JOIN
+                                            products p
+                                        ON
+                                            o.product = p.id
+                                        INNER JOIN
+                                            raw_materials r
+                                        ON
+                                            o.raw_material = r.id
+                                        INNER JOIN
+                                            status_orders so
+                                        ON
+                                            o.status_order = so.id
+                                        INNER JOIN
+                                            category c
+                                        ON
+                                            p.category = c.id
+                                        WHERE
+                                            ud.id = :id
+                                        ORDER BY o.date_initial DESC;
+                                    ';
 
-                                $orders = $this->db->fetchAll($sql);
+                                    $orders = $this->db->fetchAll(
+                                        $sql,
+                                        [
+                                            'id' => $token_array['id']
+                                        ]
+                                    );
+                                } else if ( intval($token_array['level']) == 3 ) {
+                                    $sql = '
+                                        SELECT
+                                            o.id AS id,
+                                            us.name AS solicitor,
+                                            ud.name AS designated,
+                                            p.name AS product,
+                                            c.name AS category,
+                                            r.name AS raw_material,
+                                            r.stock AS stock,
+                                            o.quantity_product_requested AS quantity_product_requested,
+                                            o.quantity_raw_material_limit AS quantity_raw_material_limit,
+                                            o.status_order AS status,
+                                            o.date_initial AS date_created,
+                                            o.date_final AS date_updated
+                                        FROM
+                                            orders o
+                                        INNER JOIN
+                                            users us
+                                        ON
+                                            o.solicitor = us.id
+                                        LEFT JOIN
+                                            users ud
+                                        ON
+                                            o.designated = ud.id
+                                        INNER JOIN
+                                            products p
+                                        ON
+                                            o.product = p.id
+                                        INNER JOIN
+                                            raw_materials r
+                                        ON
+                                            o.raw_material = r.id
+                                        INNER JOIN
+                                            status_orders so
+                                        ON
+                                            o.status_order = so.id
+                                        INNER JOIN
+                                            category c
+                                        ON
+                                            p.category = c.id
+                                        WHERE
+                                            us.id = :id
+                                        ORDER BY o.date_initial DESC;
+                                    ';
+
+                                    $orders = $this->db->fetchAll(
+                                        $sql,
+                                        [
+                                            'id' => $token_array['id']
+                                        ]
+                                    );
+                                } else {
+                                    $sql = '
+                                        SELECT
+                                            o.id AS id,
+                                            us.name AS solicitor,
+                                            ud.name AS designated,
+                                            p.name AS product,
+                                            c.name AS category,
+                                            r.name AS raw_material,
+                                            r.stock AS stock,
+                                            o.quantity_product_requested AS quantity_product_requested,
+                                            o.quantity_raw_material_limit AS quantity_raw_material_limit,
+                                            o.status_order AS status,
+                                            o.date_initial AS date_created,
+                                            o.date_final AS date_updated
+                                        FROM
+                                            orders o
+                                        INNER JOIN
+                                            users us
+                                        ON
+                                            o.solicitor = us.id
+                                        LEFT JOIN
+                                            users ud
+                                        ON
+                                            o.designated = ud.id
+                                        INNER JOIN
+                                            products p
+                                        ON
+                                            o.product = p.id
+                                        INNER JOIN
+                                            raw_materials r
+                                        ON
+                                            o.raw_material = r.id
+                                        INNER JOIN
+                                            status_orders so
+                                        ON
+                                            o.status_order = so.id
+                                        INNER JOIN
+                                            category c
+                                        ON
+                                            p.category = c.id
+                                        ORDER BY o.date_initial DESC;
+                                    ';
+
+                                    $orders = $this->db->fetchAll($sql);
+                                }
 
                                 if ( !empty($orders) ) {
                                     foreach ($orders as $key => $order) {
@@ -190,8 +300,8 @@
                                 $sql = '
                                     SELECT
                                         o.id AS id,
-                                        u.solicitor AS solicitor,
-                                        u.designated AS designated,
+                                        us.name AS solicitor,
+                                        ud.name AS designated,
                                         p.name AS product,
                                         c.name AS category,
                                         r.name AS raw_material,
@@ -204,9 +314,13 @@
                                     FROM
                                         orders o
                                     INNER JOIN
-                                        users u
+                                        users us
                                     ON
-                                        o.user = u.id
+                                        o.solicitor = us.id
+                                    LEFT JOIN
+                                        users ud
+                                    ON
+                                        o.designated = ud.id
                                     INNER JOIN
                                         products p
                                     ON
