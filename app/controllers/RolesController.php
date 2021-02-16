@@ -326,70 +326,80 @@
                                     $result = $query->fetch();
 
                                     if ( $row == 1 ) {
-                                        $roles->setId($id);
+                                        if ( $request->getPut('name') != $result['name'] || intval($request->getPut('situation')) != $result['situation'] ) {
+                                            $roles->setId($id);
 
-                                        if ( $request->getPut('name') != $result['name'] ) {
-                                            $roles->setName($request->getPut('name'));
-                                        } else {
-                                            $roles->setName($result['name']);
-                                        }
-
-                                        if ( intval($request->getPut('situation')) != $result['situation'] ) {
-                                            $roles->setSituation(intval($request->getPut('situation')));
-                                        } else {
-                                            $roles->setSituation($result['situation']);
-                                        }
-
-                                        $sql = '
-                                            UPDATE
-                                                roles
-                                            SET
-                                                name = :name,
-                                                situation = :situation
-                                            WHERE
-                                                id = :id;
-                                        ';
-
-                                        try {
-                                            $this->db->begin();
-
-                                            $update = $this->db->execute(
-                                                $sql,
-                                                [
-                                                    'id'        => $roles->getId(),
-                                                    'name'      => $roles->getName(),
-                                                    'situation' => $roles->getSituation()
-                                                ]
-                                            );
-
-                                            if ( $update ) {
-                                                $contents = [
-                                                    'msg' => 'Cargo alterado com sucesso!'
-                                                ];
-                                
-                                                $response
-                                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 201)
-                                                    ->send();
+                                            if ( $request->getPut('name') != $result['name'] ) {
+                                                $roles->setName($request->getPut('name'));
                                             } else {
-                                                $contents = [
-                                                    'msg' => 'Falha na alteração de cargo!'
-                                                ];
-                                
-                                                $response
-                                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
-                                                    ->send();
+                                                $roles->setName($result['name']);
                                             }
 
-                                            $this->db->commit();
-                                        } catch (Exception $error) {
-                                            $this->db->rollback();
-                
+                                            if ( intval($request->getPut('situation')) != $result['situation'] ) {
+                                                $roles->setSituation(intval($request->getPut('situation')));
+                                            } else {
+                                                $roles->setSituation($result['situation']);
+                                            }
+
+                                            $sql = '
+                                                UPDATE
+                                                    roles
+                                                SET
+                                                    name = :name,
+                                                    situation = :situation
+                                                WHERE
+                                                    id = :id;
+                                            ';
+
+                                            try {
+                                                $this->db->begin();
+
+                                                $update = $this->db->execute(
+                                                    $sql,
+                                                    [
+                                                        'id'        => $roles->getId(),
+                                                        'name'      => $roles->getName(),
+                                                        'situation' => $roles->getSituation()
+                                                    ]
+                                                );
+
+                                                if ( $update ) {
+                                                    $contents = [
+                                                        'msg' => 'Cargo alterado com sucesso!'
+                                                    ];
+                                    
+                                                    $response
+                                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 201)
+                                                        ->send();
+                                                } else {
+                                                    $contents = [
+                                                        'msg' => 'Falha na alteração de cargo!'
+                                                    ];
+                                    
+                                                    $response
+                                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                                        ->send();
+                                                }
+
+                                                $this->db->commit();
+                                            } catch (Exception $error) {
+                                                $this->db->rollback();
+                    
+                                                $contents = [
+                                                    'msg' => 'Ocorreu um erro em nosso servidor, tente mais tarde!'
+                                                ];
+                                
+                                                $response
+                                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 500)
+                                                    ->send();
+                                            }
+                                        } else {
                                             $contents = [
-                                                'msg' => 'Ocorreu um erro em nosso servidor, tente mais tarde!'
+                                                'msg' => 'Preencha pelo menos um campo com valor diferente do atual!'
                                             ];
                             
                                             $response
-                                                ->setJsonContent($contents, JSON_PRETTY_PRINT, 500)
+                                                ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
                                                 ->send();
                                         }
                                     } else {

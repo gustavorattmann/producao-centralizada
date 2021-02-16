@@ -326,70 +326,80 @@
                                     $result = $query->fetch();
 
                                     if ( $row == 1 ) {
-                                        $status_orders->setId($id);
+                                        if ( $request->getPut('name') != $result['name'] || intval($request->getPut('situation')) != $result['situation'] ) {
+                                            $status_orders->setId($id);
                                         
-                                        if ( $request->getPut('name') != $result['name'] ) {
-                                            $status_orders->setName($request->getPut('name'));
-                                        } else {
-                                            $status_orders->setName($result['name']);
-                                        }
-
-                                        if ( intval($request->getPut('situation')) != $result['situation'] ) {
-                                            $status_orders->setSituation(intval($request->getPut('situation')));
-                                        } else {
-                                            $status_orders->setSituation($result['situation']);
-                                        }
-
-                                        $sql = '
-                                            UPDATE
-                                                status_orders
-                                            SET
-                                                name = :name,
-                                                situation = :situation
-                                            WHERE
-                                                id = :id;
-                                        ';
-
-                                        try {
-                                            $this->db->begin();
-
-                                            $update = $this->db->execute(
-                                                $sql,
-                                                [
-                                                    'id'        => $status_order->getId(),
-                                                    'name'      => $status_orders->getName(),
-                                                    'situation' => $status_orders->getSituation()
-                                                ]
-                                            );
-
-                                            if ( $update ) {
-                                                $contents = [
-                                                    'msg' => 'Status de pedidos alterado com sucesso!'
-                                                ];
-                                
-                                                $response
-                                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 201)
-                                                    ->send();
+                                            if ( $request->getPut('name') != $result['name'] ) {
+                                                $status_orders->setName($request->getPut('name'));
                                             } else {
-                                                $contents = [
-                                                    'msg' => 'Falha na alteração de status de pedidos!'
-                                                ];
-                                
-                                                $response
-                                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
-                                                    ->send();
+                                                $status_orders->setName($result['name']);
                                             }
 
-                                            $this->db->commit();
-                                        } catch (Exception $error) {
-                                            $this->db->rollback();
-                
+                                            if ( intval($request->getPut('situation')) != $result['situation'] ) {
+                                                $status_orders->setSituation(intval($request->getPut('situation')));
+                                            } else {
+                                                $status_orders->setSituation($result['situation']);
+                                            }
+
+                                            $sql = '
+                                                UPDATE
+                                                    status_orders
+                                                SET
+                                                    name = :name,
+                                                    situation = :situation
+                                                WHERE
+                                                    id = :id;
+                                            ';
+
+                                            try {
+                                                $this->db->begin();
+
+                                                $update = $this->db->execute(
+                                                    $sql,
+                                                    [
+                                                        'id'        => $status_order->getId(),
+                                                        'name'      => $status_orders->getName(),
+                                                        'situation' => $status_orders->getSituation()
+                                                    ]
+                                                );
+
+                                                if ( $update ) {
+                                                    $contents = [
+                                                        'msg' => 'Status de pedidos alterado com sucesso!'
+                                                    ];
+                                    
+                                                    $response
+                                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 201)
+                                                        ->send();
+                                                } else {
+                                                    $contents = [
+                                                        'msg' => 'Falha na alteração de status de pedidos!'
+                                                    ];
+                                    
+                                                    $response
+                                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                                        ->send();
+                                                }
+
+                                                $this->db->commit();
+                                            } catch (Exception $error) {
+                                                $this->db->rollback();
+                    
+                                                $contents = [
+                                                    'msg' => 'Ocorreu um erro em nosso servidor, tente mais tarde!'
+                                                ];
+                                
+                                                $response
+                                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 500)
+                                                    ->send();
+                                            }
+                                        } else {
                                             $contents = [
-                                                'msg' => 'Ocorreu um erro em nosso servidor, tente mais tarde!'
+                                                'msg' => 'Preencha pelo menos um campo com valor diferente do atual!'
                                             ];
                             
                                             $response
-                                                ->setJsonContent($contents, JSON_PRETTY_PRINT, 500)
+                                                ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
                                                 ->send();
                                         }
                                     } else {
