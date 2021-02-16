@@ -303,23 +303,25 @@
                                     );
 
                                     $row = $query->numRows();
-                                    $user = $query->fetch();
+                                    $users = $query->fetchAll();
 
-                                    if ( $row == 1 ) {
-                                        if ( $user['role'] == NULL ) {
-                                            $user['role'] = '';
+                                    if ( $row > 0 ) {
+                                        foreach ($users as $key => $user) {
+                                            if ( $user['role'] == NULL ) {
+                                                $user['role'] = '';
+                                            }
+    
+                                            $contents[$key] = [
+                                                'user' => [
+                                                    'id'        => $user['id'],
+                                                    'name'      => $user['name'],
+                                                    'email'     => $user['email'],
+                                                    'role'      => $user['role'],
+                                                    'situation' => $user['situation']
+                                                ]
+                                            ];
                                         }
-
-                                        $contents = [
-                                            'user' => [
-                                                'id'        => $user['id'],
-                                                'name'      => $user['name'],
-                                                'email'     => $user['email'],
-                                                'role'      => $user['role'],
-                                                'situation' => $user['situation']
-                                            ]
-                                        ];
-
+                                        
                                         $response
                                             ->setJsonContent($contents, JSON_PRETTY_PRINT, 200)
                                             ->send();
