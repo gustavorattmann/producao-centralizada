@@ -423,7 +423,7 @@
                                         }
                                     } else {
                                         $contents = [
-                                            'msg' => 'Valor informado é diferente do permitido!'
+                                            'msg' => 'Valor informado para situação está diferente do permitido!'
                                         ];
                         
                                         $response
