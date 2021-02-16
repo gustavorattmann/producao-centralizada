@@ -156,15 +156,6 @@
                                             name = :name;
                                     ';
 
-                                    $sql_verify_category = '
-                                        SELECT
-                                            *
-                                        FROM
-                                            category
-                                        WHERE
-                                            id = :id;
-                                    ';
-
                                     $query_verify_product = $this->db->query(
                                         $sql_verify_product,
                                         [
@@ -172,18 +163,28 @@
                                         ]
                                     );
 
-                                    $query_verify_category = $this->db->query(
-                                        $sql_verify_category,
-                                        [
-                                            'id' => $request->get('category')
-                                        ]
-                                    );
-
                                     $verify_product_exist = $query_verify_product->numRows();
-                                    $verify_category_exist = $query_verify_category->numRows();
-                                    $category = $query_verify_category->fetch();
 
                                     if ( $verify_product_exist < 1 ) {
+                                        $sql_verify_category = '
+                                            SELECT
+                                                *
+                                            FROM
+                                                category
+                                            WHERE
+                                                id = :id;
+                                        ';
+
+                                        $query_verify_category = $this->db->query(
+                                            $sql_verify_category,
+                                            [
+                                                'id' => $request->get('category')
+                                            ]
+                                        );
+
+                                        $verify_category_exist = $query_verify_category->numRows();
+                                        $category = $query_verify_category->fetch();
+
                                         if ( $verify_category_exist == 1 ) {
                                             if ( $category['situation'] == 1 ) {
                                                 $products->setName($request->get('name'));
