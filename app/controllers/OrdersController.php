@@ -81,12 +81,14 @@
                                         ORDER BY o.date_initial DESC;
                                     ';
 
-                                    $orders = $this->db->fetchAll(
+                                    $query = $this->db->query(
                                         $sql,
                                         [
-                                            'id' => $token_array['id']
+                                            'id' => intval($token_array['id'])
                                         ]
                                     );
+
+                                    $orders = $query->fetchAll();
                                 } else if ( intval($token_array['level']) == 3 ) {
                                     $sql = '
                                         SELECT
@@ -133,12 +135,14 @@
                                         ORDER BY o.date_initial DESC;
                                     ';
 
-                                    $orders = $this->db->fetchAll(
+                                    $query = $this->db->query(
                                         $sql,
                                         [
-                                            'id' => $token_array['id']
+                                            'id' => intval($token_array['id'])
                                         ]
                                     );
+
+                                    $orders = $query->fetchAll();
                                 } else {
                                     $sql = '
                                         SELECT
@@ -189,7 +193,13 @@
                                 if ( !empty($orders) ) {
                                     foreach ($orders as $key => $order) {
                                         $date_created = new \DateTime($order['date_created']);
-                                        $date_updated = new \DateTime($order['date_updated']);
+
+                                        if ( $order['date_updated'] != NULL ) {
+                                            $date = new \DateTime($order['date_updated']);
+                                            $date_updated = $date->format('d/m/Y H:i:s');
+                                        } else {
+                                            $date_updated = NULL;
+                                        }
 
                                         $contents[$key] = [
                                             'order' => [
@@ -204,7 +214,7 @@
                                                 'quantity_raw_material_limit' => $order['quantity_raw_material_limit'],
                                                 'status'                      => $order['status'],
                                                 'date_created'                => $date_created->format('d/m/Y H:i:s'),
-                                                'date_updated'                => $date_updated->format('d/m/Y H:i:s')
+                                                'date_updated'                => $date_updated
                                             ]
                                         ];
                                     }
@@ -300,6 +310,7 @@
                                 $sql = '
                                     SELECT
                                         o.id AS id,
+                                        us.id AS id_solicitor,
                                         us.name AS solicitor,
                                         ud.name AS designated,
                                         p.name AS product,
@@ -352,33 +363,49 @@
                                 $row = $query->numRows();
                                 $result = $query->fetch();
 
-                                if ( $row == 1 ) {
-                                    $date_created = new \DateTime($result['date_created']);
-                                    $date_updated = new \DateTime($result['date_updated']);
-
-                                    $contents = [
-                                        'order' => [
-                                            'id'                          => $result['id'],
-                                            'solicitor'                   => $result['solicitor'],
-                                            'designated'                  => $result['designated'],
-                                            'product'                     => $result['product'],
-                                            'category'                    => $result['category'],
-                                            'raw_material'                => $result['raw_material'],
-                                            'stock'                       => $result['stock'],
-                                            'quantity_product_requested'  => $result['quantity_product_requested'],
-                                            'quantity_raw_material_limit' => $result['quantity_raw_material_limit'],
-                                            'status'                      => $result['status'],
-                                            'date_created'                => $date_created->format('d/m/Y H:i:s'),
-                                            'date_updated'                => $date_updated->format('d/m/Y H:i:s')
-                                        ]
-                                    ];
-
-                                    $response
-                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 200)
-                                        ->send();
+                                if ( intval($token_array['level']) == 1 || intval($result['id_solicitor']) == intval($token_array['id']) ) {
+                                    if ( $row == 1 ) {
+                                        $date_created = new \DateTime($result['date_created']);
+    
+                                        if ( $order['date_updated'] != NULL ) {
+                                            $date = new \DateTime($result['date_updated']);
+                                            $date_updated = $date->format('d/m/Y H:i:s');
+                                        } else {
+                                            $date_updated = NULL;
+                                        }
+    
+                                        $contents = [
+                                            'order' => [
+                                                'id'                          => $result['id'],
+                                                'solicitor'                   => $result['solicitor'],
+                                                'designated'                  => $result['designated'],
+                                                'product'                     => $result['product'],
+                                                'category'                    => $result['category'],
+                                                'raw_material'                => $result['raw_material'],
+                                                'stock'                       => $result['stock'],
+                                                'quantity_product_requested'  => $result['quantity_product_requested'],
+                                                'quantity_raw_material_limit' => $result['quantity_raw_material_limit'],
+                                                'status'                      => $result['status'],
+                                                'date_created'                => $date_created->format('d/m/Y H:i:s'),
+                                                'date_updated'                => $date_updated
+                                            ]
+                                        ];
+    
+                                        $response
+                                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 200)
+                                            ->send();
+                                    } else {
+                                        $contents = [
+                                            'msg' => 'Pedido não encontrado!'
+                                        ];
+                        
+                                        $response
+                                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                            ->send();
+                                    }
                                 } else {
                                     $contents = [
-                                        'msg' => 'Pedido não encontrado!'
+                                        'msg' => 'Você não possui autorização para visualizar esse pedido!'
                                     ];
                     
                                     $response
@@ -551,14 +578,17 @@
                                                         $orders->setQuantityProductRequested(intval($request->get('quantity_product_requested')));
                                                         $orders->setQuantityRawMaterialLimit(intval($request->get('quantity_raw_material_limit')));
                                                         $orders->setStatusOrder(intval($request->get('status')));
+                                                        $orders->setSituation(1);
                                                         $orders->setDateInitial($date->format('Y-m-d H:i:s'));
                                                         $orders->setDateFinal(NULL);
 
                                                         $sql = '
                                                             INSERT INTO orders
-                                                                (solicitor, designated, product, raw_material, quantity_product_requested, quantity_raw_material_limit, status_order, date_initial, date_final)
+                                                                (solicitor, designated, product, raw_material, quantity_product_requested,
+                                                                 quantity_raw_material_limit, status_order, situation, date_initial, date_final)
                                                             VALUES
-                                                                (:solicitor, :designated, :product, :raw_material, :quantity_product_requested, :quantity_raw_material_limit, :status_order, :date_initial, :date_final);
+                                                                (:solicitor, :designated, :product, :raw_material, :quantity_product_requested,
+                                                                 :quantity_raw_material_limit, :status_order, :situation, :date_initial, :date_final);
                                                         ';
 
                                                         try {
@@ -574,6 +604,7 @@
                                                                     'quantity_product_requested'  => $orders->getQuantityProductRequested(),
                                                                     'quantity_raw_material_limit' => $orders->getQuantityRawMaterialLimit(),
                                                                     'status_order'                => $orders->getStatusOrder(),
+                                                                    'situation'                   => $orders->getSituation(),
                                                                     'date_initial'                => $orders->getDateInitial(),
                                                                     'date_final'                  => $orders->getDateFinal()
                                                                 ]
@@ -609,7 +640,7 @@
                                                                 ->setJsonContent($contents, JSON_PRETTY_PRINT, 500)
                                                                 ->send();
                                                         }
-                                                    } else if ( intval($request->get('quantity_raw_material_limit')) < $result['stock'] ) {
+                                                    } else if ( intval($request->get('quantity_raw_material_limit')) < 0 ) {
                                                         $contents = [
                                                             'msg' => 'A quantidade de matéria-prima requisitada precisa ser maior que 0!'
                                                         ];
@@ -668,7 +699,7 @@
                                     ];
                     
                                     $response
-                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
+                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
                                         ->send();
                                 }
                             } else {
