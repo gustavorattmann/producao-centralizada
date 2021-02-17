@@ -4,7 +4,7 @@
 
     use Phalcon\Mvc\Model;
 
-    class User extends Model
+    class Users extends Model
     {
         protected $id, $name, $email, $password, $level, $situation;
 
