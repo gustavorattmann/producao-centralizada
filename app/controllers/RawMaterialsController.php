@@ -34,7 +34,7 @@
 
                     if ( date(\DateTime::ISO8601) <= $nbf_array ) {
                         if ( intval($token_array['situation']) == 1 ) {
-                            if ( intval($token_array['level']) == 1 || intval($token_array['level']) == 4 ) {
+                            if ( intval($token_array['level']) == 1 || intval($token_array['level']) == 3 || intval($token_array['level']) == 4 ) {
                                 $sql = '
                                     SELECT
                                         id, name, stock, situation
