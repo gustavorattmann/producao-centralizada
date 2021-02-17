@@ -854,7 +854,7 @@
                                                     $response
                                                         ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
                                                         ->send();
-                                                } else if ( intval($request->getPut('quantity_product_produced')) <= $result['quantity_product_requested'] ) {
+                                                } else if ( intval($request->getPut('quantity_product_produced')) > $result['quantity_product_requested'] ) {
                                                     $contents = [
                                                         'msg' => 'Quantidade de produto(s) produzido(s) acima da quantidade solicitada!'
                                                     ];
