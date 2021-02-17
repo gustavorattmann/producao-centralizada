@@ -636,13 +636,40 @@
                                                         );
             
                                                         if ( $success ) {
-                                                            $contents = [
-                                                                'msg' => 'Cadastro realizado com sucesso!'
-                                                            ];
-                                            
-                                                            $response
-                                                                ->setJsonContent($contents, JSON_PRETTY_PRINT, 201)
-                                                                ->send();
+                                                            $sql_status_order = '
+                                                                UPDATE
+                                                                    orders
+                                                                SET
+                                                                    status_order = :status
+                                                                WHERE
+                                                                    id = :id;
+                                                            ';
+
+                                                            $update_status_order = $this->db->execute(
+                                                                $sql_status_order,
+                                                                [
+                                                                    'id'     => intval($id),
+                                                                    'status' => 2
+                                                                ]
+                                                            );
+
+                                                            if ( $update_status_order ) {
+                                                                $contents = [
+                                                                    'msg' => 'Cadastro realizado com sucesso!'
+                                                                ];
+                                                
+                                                                $response
+                                                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 201)
+                                                                    ->send();
+                                                            } else {
+                                                                $contents = [
+                                                                    'msg' => 'Falha ao alterar o status do pedido!'
+                                                                ];
+                                                
+                                                                $response
+                                                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                                                    ->send();
+                                                            }
                                                         } else {
                                                             $contents = [
                                                                 'msg' => 'Falha no cadastro!'
@@ -955,13 +982,40 @@
                                                             );
 
                                                             if ( $success ) {
-                                                                $contents = [
-                                                                    'msg' => 'Produção de pedido alterada com sucesso!'
-                                                                ];
-                                                
-                                                                $response
-                                                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 201)
-                                                                    ->send();
+                                                                $sql_status_order = '
+                                                                    UPDATE
+                                                                        orders
+                                                                    SET
+                                                                        status_order = :status
+                                                                    WHERE
+                                                                        id = :id;
+                                                                ';
+
+                                                                $update_status_order = $this->db->execute(
+                                                                    $sql_status_order,
+                                                                    [
+                                                                        'id'     => $result['ordered'],
+                                                                        'status' => 3
+                                                                    ]
+                                                                );
+
+                                                                if ( $update_status_order ) {
+                                                                    $contents = [
+                                                                        'msg' => 'Produção de produto alterado com sucesso!'
+                                                                    ];
+                                                    
+                                                                    $response
+                                                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 201)
+                                                                        ->send();
+                                                                } else {
+                                                                    $contents = [
+                                                                        'msg' => 'Falha ao alterar o status do pedido!'
+                                                                    ];
+                                                    
+                                                                    $response
+                                                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                                                        ->send();
+                                                                }
                                                             } else {
                                                                 $contents = [
                                                                     'msg' => 'Não foi possível alterar produção de produto!'
