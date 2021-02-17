@@ -261,7 +261,7 @@
                                 ];
                 
                                 $response
-                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
                                     ->send();
                             }
                         } else {
@@ -275,7 +275,7 @@
                         }
                     } else {
                         $contents = [
-                            'msg' => 'Não é possível acessar essa página, faça login!'
+                            'msg' => 'Sua sessão expirou. Por favor, faça login novamente!'
                         ];
         
                         $response
@@ -447,7 +447,7 @@
                                     ];
                     
                                     $response
-                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
                                         ->send();
                                 }
                             } else {
@@ -456,7 +456,7 @@
                                 ];
                 
                                 $response
-                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
                                     ->send();
                             }
                         } else {
@@ -470,7 +470,7 @@
                         }
                     } else {
                         $contents = [
-                            'msg' => 'Não é possível acessar essa página, faça login!'
+                            'msg' => 'Sua sessão expirou. Por favor, faça login novamente!'
                         ];
         
                         $response
@@ -497,7 +497,7 @@
             }
         }
 
-        public function produced()
+        public function produced($id)
         {
             $production = New Production();
             
@@ -523,118 +523,173 @@
 
                     if ( date(\DateTime::ISO8601) <= $nbf_array ) {
                         if ( intval($token_array['situation']) == 1 ) {
-                            if ( intval($token_array['level']) == 0 || intval($token_array['level']) == 1 ) {
-                                if ( !empty($request->get('ordered')) &&
-                                     !empty($request->get('quantity_product_produced')) &&
-                                     !empty($request->get('quantity_product_losted')) &&
-                                     !empty($request->get('quantity_raw_material_used')) &&
-                                     !empty($request->get('quantity_raw_material_losted')) ) {
-                                    $sql_verify_order = '
-                                        SELECT
-                                            *
-                                        FROM
-                                            orders
-                                        WHERE
-                                            id = :id;
-                                    ';
+                            if ( intval($token_array['level']) == 1 || intval($token_array['level']) == 5 ) {
+                                $sql_verify_order = '
+                                    SELECT
+                                        *
+                                    FROM
+                                        orders
+                                    WHERE
+                                        id = :id;
+                                ';
 
-                                    $query_verify_order = $this->db->query(
-                                        $sql_verify_order,
-                                        [
-                                            'id' => intval($request->get('ordered'))
-                                        ]
-                                    );
+                                $query_verify_order = $this->db->query(
+                                    $sql_verify_order,
+                                    [
+                                        'id' => intval($id)
+                                    ]
+                                );
 
-                                    $row_order = $query_verify_order->numRows();
-                                    
-                                    if ( $row_order == 1 ) {
-                                        $date = new \DateTime();
-
-                                        $production->setUser(intval($token_array['id']));
-                                        $production->setOrdered(intval($request->get('ordered')));
-                                        $production->setQuantityProductProduced(intval($request->get('quantity_product_produced')));
-                                        $production->setQuantityProductLosted(intval($request->get('quantity_product_losted')));
-                                        $production->setQuantityRawMaterialUsed(intval($request->get('quantity_raw_material_used')));
-                                        $production->setQuantityRawMaterialLosted(intval($request->get('quantity_raw_material_losted')));
-
-                                        if ( !empty($request->get('justification')) ) {
-                                            $production->setJustification(intval($request->get('justification')));
-                                        } else {
-                                            $production->setJustification(NULL);
-                                        }
-                                        
-                                        $production->setDate($date->format('Y-m-d H:i:s'));
-
-                                        $sql = '
-                                            INSERT INTO production
-                                                (user, ordered, quantity_product_produced, quantity_product_losted, quantity_raw_material_used, quantity_raw_material_losted, justification, date)
-                                            VALUES
-                                                (:user, :ordered, :quantity_product_produced, :quantity_product_losted, :quantity_raw_material_used, :quantity_raw_material_losted, :justification, :date);
-                                        ';
-
-                                        try {
-                                            $this->db->begin();
-
-                                            $success = $this->db->query(
-                                                $sql,
-                                                [
-                                                    'user'                         => $production->getUser(),
-                                                    'ordered'                      => $production->getOrdered(),
-                                                    'quantity_product_produced'    => $production->getQuantityProductProduced(),
-                                                    'quantity_product_losted'      => $production->getQuantityProductLosted(),
-                                                    'quantity_raw_material_used'   => $production->getQuantityRawMaterialUsed(),
-                                                    'quantity_raw_material_losted' => $production->getQuantityRawMaterialLosted(),
-                                                    'justification'                => $production->getJustification(),
-                                                    'date'                         => $production->getDate()
-                                                ]
-                                            );
-
-                                            if ( $success ) {
-                                                $contents = [
-                                                    'msg' => 'Cadastro realizado com sucesso!'
-                                                ];
+                                $row_order = $query_verify_order->numRows();
+                                $result_order = $query_verify_order->fetch();
                                 
-                                                $response
-                                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 201)
-                                                    ->send();
-                                            } else {
+                                if ( $row_order == 1 ) {
+                                    if ( intval($token_array['level']) == 1 || $result_order['designated'] == intval($token_array['id']) ) {
+                                        if ( ( !empty($request->get('quantity_product_produced')) || is_numeric($request->get('quantity_product_produced')) ) &&
+                                             ( !empty($request->get('quantity_product_losted')) || is_numeric($request->get('quantity_product_losted')) ) &&
+                                             ( !empty($request->get('quantity_raw_material_used')) || is_numeric($request->get('quantity_raw_material_used')) ) &&
+                                             ( !empty($request->get('quantity_raw_material_losted')) || is_numeric($request->get('quantity_raw_material_losted')) ) ) {
+                                            if ( $request->get('quantity_product_produced') < 1 ) {
                                                 $contents = [
-                                                    'msg' => 'Falha no cadastro!'
+                                                    'msg' => 'Valor informado para quantidade de produto produzido está diferente do permitido!'
                                                 ];
                                 
                                                 $response
                                                     ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
                                                     ->send();
+                                            } else if ( $request->get('quantity_product_losted') < 1 ) {
+                                                $contents = [
+                                                    'msg' => 'Valor informado para quantidade de produto perdido está diferente do permitido!'
+                                                ];
+                                
+                                                $response
+                                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                                    ->send();
+                                            } else if ( $request->get('quantity_raw_material_used') < 1 ) {
+                                                $contents = [
+                                                    'msg' => 'Valor informado para quantidade de matéria-prima utilizada está diferente do permitido!'
+                                                ];
+                                
+                                                $response
+                                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                                    ->send();
+                                            } else if ( $request->get('quantity_raw_material_losted') < 1 ) {
+                                                $contents = [
+                                                    'msg' => 'Valor informado para quantidade de matéria-prima perdida está diferente do permitido!'
+                                                ];
+                                
+                                                $response
+                                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                                    ->send();
+                                            } else if ( intval($request->get('quantity_product_produced')) <= $result_order['quantity_product_requested'] ) {
+                                                $contents = [
+                                                    'msg' => 'Quantidade de produto(s) produzido(s) acima da quantidade solicitada!'
+                                                ];
+                                
+                                                $response
+                                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                                    ->send();
+                                            } else {
+                                                $date = new \DateTime();
+    
+                                                $production->setOrdered(intval($id));
+                                                $production->setQuantityProductProduced(intval($request->get('quantity_product_produced')));
+                                                $production->setQuantityProductLosted(intval($request->get('quantity_product_losted')));
+                                                $production->setQuantityRawMaterialUsed(intval($request->get('quantity_raw_material_used')));
+                                                $production->setQuantityRawMaterialLosted(intval($request->get('quantity_raw_material_losted')));
+                                                $production->setSituation(1);
+                                                $production->setDateInitial($date->format('Y-m-d H:i:s'));
+                                                $production->setDateFinal(NULL);
+        
+                                                if ( !empty($request->get('justification')) ) {
+                                                    $production->setJustification($request->get('justification'));
+                                                } else {
+                                                    $production->setJustification(NULL);
+                                                }
+        
+                                                $sql = '
+                                                    INSERT INTO production
+                                                        (ordered, quantity_product_produced, quantity_product_losted, quantity_raw_material_used,
+                                                        quantity_raw_material_losted, justification, situation, date_initial, date_final)
+                                                    VALUES
+                                                        (:ordered, :quantity_product_produced, :quantity_product_losted, :quantity_raw_material_used,
+                                                        :quantity_raw_material_losted, :justification, :situation, :date_initial, :date_final);
+                                                ';
+        
+                                                try {
+                                                    $this->db->begin();
+        
+                                                    $success = $this->db->query(
+                                                        $sql,
+                                                        [
+                                                            'ordered'                      => $production->getOrdered(),
+                                                            'quantity_product_produced'    => $production->getQuantityProductProduced(),
+                                                            'quantity_product_losted'      => $production->getQuantityProductLosted(),
+                                                            'quantity_raw_material_used'   => $production->getQuantityRawMaterialUsed(),
+                                                            'quantity_raw_material_losted' => $production->getQuantityRawMaterialLosted(),
+                                                            'justification'                => $production->getJustification(),
+                                                            'situation'                    => $production->getSituation(),
+                                                            'date_initial'                 => $production->getDateInitial(),
+                                                            'date_final'                   => $production->getDateFinal()
+                                                        ]
+                                                    );
+        
+                                                    if ( $success ) {
+                                                        $contents = [
+                                                            'msg' => 'Cadastro realizado com sucesso!'
+                                                        ];
+                                        
+                                                        $response
+                                                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 201)
+                                                            ->send();
+                                                    } else {
+                                                        $contents = [
+                                                            'msg' => 'Falha no cadastro!'
+                                                        ];
+                                        
+                                                        $response
+                                                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                                            ->send();
+                                                    }
+        
+                                                    $this->db->commit();
+                                                } catch (Exception $error) {
+                                                    $this->db->rollback();
+        
+                                                    $contents = [
+                                                        'msg' => 'Ocorreu um erro em nosso servidor, tente mais tarde!'
+                                                    ];
+                                    
+                                                    $response
+                                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 500)
+                                                        ->send();
+                                                }
                                             }
-
-                                            $this->db->commit();
-                                        } catch (Exception $error) {
-                                            $this->db->rollback();
-
+                                        } else {
                                             $contents = [
-                                                'msg' => 'Ocorreu um erro em nosso servidor, tente mais tarde!'
+                                                'msg' => 'Dados incompletos!'
                                             ];
                             
                                             $response
-                                                ->setJsonContent($contents, JSON_PRETTY_PRINT, 500)
+                                                ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
                                                 ->send();
                                         }
                                     } else {
                                         $contents = [
-                                            'msg' => 'Produção de produto não encontrada!'
+                                            'msg' => 'Você não possui autorização para produzir esse produto!'
                                         ];
                         
                                         $response
-                                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
                                             ->send();
                                     }
                                 } else {
                                     $contents = [
-                                        'msg' => 'Dados incompletos!'
+                                        'msg' => 'Pedido não encontrado!'
                                     ];
                     
                                     $response
-                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
+                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
                                         ->send();
                                 }
                             } else {
@@ -643,7 +698,7 @@
                                 ];
                 
                                 $response
-                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
                                     ->send();
                             }
                         } else {
@@ -657,7 +712,7 @@
                         }
                     } else {
                         $contents = [
-                            'msg' => 'Não é possível acessar essa página, faça login!'
+                            'msg' => 'Sua sessão expirou. Por favor, faça login novamente!'
                         ];
         
                         $response
@@ -710,131 +765,227 @@
 
                     if ( date(\DateTime::ISO8601) <= $nbf_array ) {
                         if ( intval($token_array['situation']) == 1 ) {
-                            $sql_verify_production = '
-                                SELECT
-                                    *
-                                FROM
-                                    production
-                                WHERE
-                                    id = :id
-                            ';
+                            if ( intval($token_array['level']) == 1 || intval($token_array['level']) == 5 ) {
+                                $sql_verify_production = '
+                                    SELECT
+                                        ud.id AS id_designated,
+                                        pr.ordered AS ordered,
+                                        o.quantity_product_requested AS quantity_product_requested,
+                                        pr.quantity_product_produced AS quantity_product_produced,
+                                        pr.quantity_product_losted AS quantity_product_losted,
+                                        pr.quantity_raw_material_used AS quantity_raw_material_used,
+                                        pr.quantity_raw_material_losted AS quantity_raw_material_losted,
+                                        pr.justification AS justification,
+                                        o.status_order AS status,
+                                        pr.situation AS situation,
+                                        pr.date_initial AS date_created
+                                        pr.date_final AS date_updated
+                                    FROM
+                                        production pr
+                                    INNER JOIN
+                                        orders o
+                                    ON
+                                        pr.ordered = o.id
+                                    LEFT JOIN
+                                        users ud
+                                    ON
+                                        o.designated = ud.id
+                                    WHERE
+                                        pr.id = :id
+                                ';
 
-                            $query_verify_production = $this->db->query(
-                                $sql_verify_production,
-                                [
-                                    'id' => $id
-                                ]
-                            );
+                                $query_verify_production = $this->db->query(
+                                    $sql_verify_production,
+                                    [
+                                        'id' => intval($id)
+                                    ]
+                                );
 
-                            $row = $query_verify_production->numRows();
-                            $result = $query_verify_production->fetch();
+                                $row = $query_verify_production->numRows();
+                                $result = $query_verify_production->fetch();
 
-                            if ( $row == 1 ) {
-                                if ( intval($token_array['level']) == 0 || $token_array['id'] == $result['user'] ) {
-                                    if ( !empty($request->getPut('quantity_product_produced')) &&
-                                         !empty($request->getPut('quantity_product_losted')) &&
-                                         !empty($request->getPut('quantity_raw_material_used')) &&
-                                         !empty($request->getPut('quantity_raw_material_losted')) ) {
-                                        if ( intval($request->getPut('quantity_product_produced')) != $result['quantity_product_produced'] ||
-                                                intval($request->getPut('quantity_product_losted')) != $result['quantity_product_losted'] ||
-                                                intval($request->getPut('quantity_raw_material_used')) != $result['quantity_raw_material_used'] ||
-                                                intval($request->getPut('quantity_raw_material_losted')) != $result['quantity_raw_material_losted'] ||
-                                                $request->getPut('justification') != $result['justification'] ) {
-                                            // $date = new \DateTime();
-                                            $production->setId($id);
-                                            // $production->setDate($result['date']);
-
-                                            if ( $request->getPut('quantity_product_produced') != $result['quantity_product_produced'] ) {
-                                                $production->setQuantityProductProduced(intval($request->getPut('quantity_product_produced')));
+                                if ( $row == 1 ) {
+                                    if ( intval($token_array['level']) == 1 || $result['id_designated'] == intval($token_array['id']) ) {
+                                        if ( ( !empty($request->getPut('quantity_product_produced')) || is_numeric($request->getPut('quantity_product_produced')) ) &&
+                                             ( !empty($request->getPut('quantity_product_losted')) || is_numeric($request->getPut('quantity_product_losted')) ) &&
+                                             ( !empty($request->getPut('quantity_raw_material_used')) || is_numeric($request->getPut('quantity_raw_material_used')) ) &&
+                                             ( !empty($request->getPut('quantity_raw_material_losted')) || is_numeric($request->getPut('quantity_raw_material_losted')) ) &&
+                                             ( !empty($request->getPut('situation')) || is_numeric($request->getPut('situation')) ) ) {
+                                            if ( $request->getPut('quantity_product_produced') < 1 ) {
+                                                $contents = [
+                                                    'msg' => 'Valor informado para quantidade de produto produzido está diferente do permitido!'
+                                                ];
+                                
+                                                $response
+                                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                                    ->send();
+                                            } else if ( $request->getPut('quantity_product_losted') < 1 ) {
+                                                $contents = [
+                                                    'msg' => 'Valor informado para quantidade de produto perdido está diferente do permitido!'
+                                                ];
+                                
+                                                $response
+                                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                                    ->send();
+                                            } else if ( $request->getPut('quantity_raw_material_used') < 1 ) {
+                                                $contents = [
+                                                    'msg' => 'Valor informado para quantidade de matéria-prima utilizada está diferente do permitido!'
+                                                ];
+                                
+                                                $response
+                                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                                    ->send();
+                                            } else if ( $request->getPut('quantity_raw_material_losted') < 1 ) {
+                                                $contents = [
+                                                    'msg' => 'Valor informado para quantidade de matéria-prima perdida está diferente do permitido!'
+                                                ];
+                                
+                                                $response
+                                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                                    ->send();
+                                            } else if ( intval($request->getPut('quantity_product_produced')) <= $result['quantity_product_requested'] ) {
+                                                $contents = [
+                                                    'msg' => 'Quantidade de produto(s) produzido(s) acima da quantidade solicitada!'
+                                                ];
+                                
+                                                $response
+                                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                                    ->send();
+                                            } else if ( $request->getPut('situation') != 0 && $request->getPut('situation') != 1 ) {
+                                                $contents = [
+                                                    'msg' => 'Valor informado para situação está diferente do permitido!'
+                                                ];
+                                
+                                                $response
+                                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                                    ->send();
                                             } else {
-                                                $production->setQuantityProductProduced(intval($result['quantity_product_produced']));
-                                            }
+                                                if ( intval($request->getPut('quantity_product_produced')) != $result['quantity_product_produced'] ||
+                                                     intval($request->getPut('quantity_product_losted')) != $result['quantity_product_losted'] ||
+                                                     intval($request->getPut('quantity_raw_material_used')) != $result['quantity_raw_material_used'] ||
+                                                     intval($request->getPut('quantity_raw_material_losted')) != $result['quantity_raw_material_losted'] ||
+                                                     $request->getPut('justification') != $result['justification'] ||
+                                                     intval($request->getPut('situation')) != $result['situation']  ) {
+                                                    if ( !empty($result['date_updated']) ) {
+                                                        $date = new \DateTime($result['date_updated']);
+                                                    } else {
+                                                        $date = new \DateTime();
+                                                    }
 
-                                            if ( $request->getPut('quantity_product_losted') != $result['quantity_product_losted'] ) {
-                                                $production->setQuantityProductLosted(intval($request->getPut('quantity_product_losted')));
-                                            } else {
-                                                $production->setQuantityProductLosted(intval($result['quantity_product_produced']));
-                                            }
+                                                    $production->setId(intval($id));
+                                                    $production->setDateFinal($date->format('Y-m-d H:i:s'));
 
-                                            if ( $request->getPut('quantity_raw_material_used') != $result['quantity_raw_material_used'] ) {
-                                                $production->setQuantityRawMaterialUsed(intval($request->getPut('quantity_raw_material_used')));
-                                            } else {
-                                                $production->setQuantityRawMaterialUsed(intval($result['quantity_raw_material_used']));
-                                            }
+                                                    if ( $request->getPut('quantity_product_produced') != $result['quantity_product_produced'] ) {
+                                                        $production->setQuantityProductProduced(intval($request->getPut('quantity_product_produced')));
+                                                    } else {
+                                                        $production->setQuantityProductProduced(intval($result['quantity_product_produced']));
+                                                    }
+        
+                                                    if ( $request->getPut('quantity_product_losted') != $result['quantity_product_losted'] ) {
+                                                        $production->setQuantityProductLosted(intval($request->getPut('quantity_product_losted')));
+                                                    } else {
+                                                        $production->setQuantityProductLosted(intval($result['quantity_product_produced']));
+                                                    }
+        
+                                                    if ( $request->getPut('quantity_raw_material_used') != $result['quantity_raw_material_used'] ) {
+                                                        $production->setQuantityRawMaterialUsed(intval($request->getPut('quantity_raw_material_used')));
+                                                    } else {
+                                                        $production->setQuantityRawMaterialUsed(intval($result['quantity_raw_material_used']));
+                                                    }
+        
+                                                    if ( $request->getPut('quantity_raw_material_losted') != $result['quantity_raw_material_losted'] ) {
+                                                        $production->setQuantityRawMaterialLosted(intval($request->getPut('quantity_raw_material_losted')));
+                                                    } else {
+                                                        $production->setQuantityRawMaterialLosted(intval($result['quantity_raw_material_losted']));
+                                                    }
+        
+                                                    if ( $request->getPut('justification') != $result['justification'] ) {
+                                                        $production->setJustification($request->getPut('justification'));
+                                                    } else {
+                                                        $production->setJustification($result['justification']);
+                                                    }
 
-                                            if ( $request->getPut('quantity_raw_material_losted') != $result['quantity_raw_material_losted'] ) {
-                                                $production->setQuantityRawMaterialLosted(intval($request->getPut('quantity_raw_material_losted')));
-                                            } else {
-                                                $production->setQuantityRawMaterialLosted(intval($result['quantity_raw_material_losted']));
-                                            }
+                                                    if ( $request->getPut('situation') != $result['situation'] ) {
+                                                        $production->setSituation($request->getPut('situation'));
+                                                    } else {
+                                                        $production->setSituation($result['situation']);
+                                                    }
+            
+                                                    $sql = '
+                                                        UPDATE
+                                                            production
+                                                        SET
+                                                            quantity_product_produced    = :quantity_product_produced,
+                                                            quantity_product_losted      = :quantity_product_losted,
+                                                            quantity_raw_material_used   = :quantity_raw_material_used,
+                                                            quantity_raw_material_losted = :quantity_raw_material_losted,
+                                                            justification                = :justification,
+                                                            situation                    = :situation,
+                                                            date_final                   = :date_final
+                                                        WHERE
+                                                            id = :id
+                                                    ';
 
-                                            if ( $request->getPut('justification') != $result['justification'] ) {
-                                                $production->setJustification($request->getPut('justification'));
-                                            } else {
-                                                $production->setJustification($result['justification']);
-                                            }
+                                                    try {
+                                                        $this->db->begin();
 
-                                            $sql = '
-                                                UPDATE
-                                                    production
-                                                SET
-                                                    quantity_product_produced    = :quantity_product_produced,
-                                                    quantity_product_losted      = :quantity_product_losted,
-                                                    quantity_raw_material_used   = :quantity_raw_material_used,
-                                                    quantity_raw_material_losted = :quantity_raw_material_losted,
-                                                    justification                = :justification
-                                                WHERE
-                                                    id = :id
-                                            ';
+                                                        $success = $this->db->query(
+                                                            $sql,
+                                                            [
+                                                                'id'                           => $production->getId(),
+                                                                'quantity_product_produced'    => $production->getQuantityProductProduced(),
+                                                                'quantity_product_losted'      => $production->getQuantityProductLosted(),
+                                                                'quantity_raw_material_used'   => $production->getQuantityRawMaterialUsed(),
+                                                                'quantity_raw_material_losted' => $production->getQuantityRawMaterialUsed(),
+                                                                'justification'                => $production->getJustification(),
+                                                                'situation'                    => $production->getSituation(),
+                                                                'date_final'                   => $production->getDateFinal()
+                                                            ]
+                                                        );
 
-                                            try {
-                                                $this->db->begin();
+                                                        if ( $success ) {
+                                                            $contents = [
+                                                                'msg' => 'Produção de pedido alterada com sucesso!'
+                                                            ];
+                                            
+                                                            $response
+                                                                ->setJsonContent($contents, JSON_PRETTY_PRINT, 201)
+                                                                ->send();
+                                                        } else {
+                                                            $contents = [
+                                                                'msg' => 'Não foi possível alterar produção de produto!'
+                                                            ];
+                                            
+                                                            $response
+                                                                ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                                                ->send();
+                                                        }
 
-                                                $success = $this->db->query(
-                                                    $sql,
-                                                    [
-                                                        'id'                           => $production->getId(),
-                                                        'quantity_product_produced'    => $production->getQuantityProductProduced(),
-                                                        'quantity_product_losted'      => $production->getQuantityProductLosted(),
-                                                        'quantity_raw_material_used'   => $production->getQuantityRawMaterialUsed(),
-                                                        'quantity_raw_material_losted' => $production->getQuantityRawMaterialUsed(),
-                                                        'justification'                => $production->getJustification()
-                                                    ]
-                                                );
+                                                        $this->db->commit();
+                                                    } catch (Exception $error) {
+                                                        $this->db->rollback();
 
-                                                if ( $success ) {
-                                                    $contents = [
-                                                        'msg' => 'Produção de pedido alterada com sucesso!'
-                                                    ];
-                                    
-                                                    $response
-                                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 201)
-                                                        ->send();
+                                                        $contents = [
+                                                            'msg' => 'Ocorreu um erro em nosso servidor, tente mais tarde!'
+                                                        ];
+                                        
+                                                        $response
+                                                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 500)
+                                                            ->send();
+                                                    }
                                                 } else {
                                                     $contents = [
-                                                        'msg' => 'Não foi possível alterar produção de produto!'
+                                                        'msg' => 'Digite pelo menos um campo com valor diferente do atual!'
                                                     ];
                                     
                                                     $response
                                                         ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
                                                         ->send();
                                                 }
-
-                                                $this->db->commit();
-                                            } catch (Exception $error) {
-                                                $this->db->rollback();
-
-                                                $contents = [
-                                                    'msg' => 'Ocorreu um erro em nosso servidor, tente mais tarde!'
-                                                ];
-                                
-                                                $response
-                                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 500)
-                                                    ->send();
                                             }
                                         } else {
                                             $contents = [
-                                                'msg' => 'Digite pelo menos um campo com valor diferente do atual!'
+                                                'msg' => 'Dados incompletos!'
                                             ];
                             
                                             $response
@@ -843,7 +994,7 @@
                                         }
                                     } else {
                                         $contents = [
-                                            'msg' => 'Dados incompletos!'
+                                            'msg' => 'Você não possui autorização para alterar a produção desse produto!'
                                         ];
                         
                                         $response
@@ -852,7 +1003,7 @@
                                     }
                                 } else {
                                     $contents = [
-                                        'msg' => 'Você não possui autorização para acessar essa página!'
+                                        'msg' => 'Produção de produto não encontrada!'
                                     ];
                     
                                     $response
@@ -861,11 +1012,11 @@
                                 }
                             } else {
                                 $contents = [
-                                    'msg' => 'Produção de produto não encontrada!'
+                                    'msg' => 'Você não possui autorização para acessar essa página!'
                                 ];
                 
                                 $response
-                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
                                     ->send();
                             }
                         } else {
@@ -879,7 +1030,7 @@
                         }
                     } else {
                         $contents = [
-                            'msg' => 'Não é possível acessar essa página, faça login!'
+                            'msg' => 'Sua sessão expirou. Por favor, faça login novamente!'
                         ];
         
                         $response
@@ -932,7 +1083,7 @@
 
                     if ( date(\DateTime::ISO8601) <= $nbf_array ) {
                         if ( intval($token_array['situation']) == 1 ) {
-                            if ( intval($token_array['level']) == 0 ) {
+                            if ( intval($token_array['level']) == 1 ) {
                                 $sql_verify_production = '
                                     SELECT
                                         *
@@ -949,9 +1100,9 @@
                                     ]
                                 );
 
-                                $verify_production_exists = $query->numRows();
+                                $verify_production_exist = $query->numRows();
 
-                                if ( $verify_production_exists == 1 ) {
+                                if ( $verify_production_exist == 1 ) {
                                     $production->setId($id);
 
                                     $sql = '
@@ -1012,11 +1163,11 @@
                                 }
                             } else {
                                 $contents = [
-                                    'msg' => 'Você não possui autorização para fazer alterações nesse usuário!'
+                                    'msg' => 'Você não possui autorização para acessar essa página!'
                                 ];
                 
                                 $response
-                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                    ->setJsonContent($contents, JSON_PRETTY_PRINT, 401)
                                     ->send();
                             }
                         } else {
@@ -1030,7 +1181,7 @@
                         }
                     } else {
                         $contents = [
-                            'msg' => 'Não é possível acessar essa página, faça login!'
+                            'msg' => 'Sua sessão expirou. Por favor, faça login novamente!'
                         ];
         
                         $response
