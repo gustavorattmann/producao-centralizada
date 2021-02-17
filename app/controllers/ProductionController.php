@@ -544,7 +544,7 @@
                                 $result_order = $query_verify_order->fetch();
                                 
                                 if ( $row_order == 1 ) {
-                                    if ( $result['status_order'] == 1 ) {
+                                    if ( $result_order['status_order'] == 1 ) {
                                         if ( intval($token_array['level']) == 1 || $result_order['designated'] == intval($token_array['id']) ) {
                                             if ( ( !empty($request->get('quantity_product_produced')) || is_numeric($request->get('quantity_product_produced')) ) &&
                                                 ( !empty($request->get('quantity_product_losted')) || is_numeric($request->get('quantity_product_losted')) ) &&
@@ -582,7 +582,7 @@
                                                     $response
                                                         ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
                                                         ->send();
-                                                } else if ( intval($request->get('quantity_product_produced')) <= $result_order['quantity_product_requested'] ) {
+                                                } else if ( intval($request->get('quantity_product_produced')) > $result_order['quantity_product_requested'] ) {
                                                     $contents = [
                                                         'msg' => 'Quantidade de produto(s) produzido(s) acima da quantidade solicitada!'
                                                     ];
