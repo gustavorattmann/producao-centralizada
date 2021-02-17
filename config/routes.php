@@ -95,7 +95,7 @@
                ->setPrefix('/api/production')
                ->get('/', 'index')
                ->get('/product/{id}', 'product')
-               ->post('/produced', 'produced')
+               ->post('/produced/{id}', 'produced')
                ->put('/update/{id}', 'update')
                ->delete('/delete/{id}', 'delete')
                ->post('/report', 'report');
