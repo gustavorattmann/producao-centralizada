@@ -34,58 +34,196 @@
 
                     if ( date(\DateTime::ISO8601) <= $nbf_array ) {
                         if ( intval($token_array['situation']) == 1 ) {
-                            if ( intval($token_array['level']) == 0 || intval($token_array['level']) == 1 ) {
-                                $sql = '
-                                    SELECT
-                                        pr.id AS id,
-                                        u.name AS solicitor,
-                                        p.name AS product,
-                                        c.name AS category,
-                                        r.name AS raw_material,
-                                        r.stock AS stock,
-                                        o.quantity_product_requested AS quantity_product_requested,
-                                        pr.quantity_product_produced AS quantity_product_produced,
-                                        pr.quantity_product_losted AS quantity_product_losted,
-                                        o.quantity_raw_material_limit AS quantity_raw_material_limit,
-                                        pr.quantity_raw_material_used AS quantity_raw_material_used,
-                                        pr.quantity_raw_material_losted AS quantity_raw_material_losted,
-                                        pr.justification AS justification,
-                                        pr.date AS date
-                                    FROM
-                                        production pr
-                                    INNER JOIN
-                                        orders o
-                                    ON
-                                        pr.ordered = o.id
-                                    INNER JOIN
-                                        users u
-                                    ON
-                                        pr.user = u.id
-                                    INNER JOIN
-                                        products p
-                                    ON
-                                        o.product = p.id
-                                    INNER JOIN
-                                        raw_materials r
-                                    ON
-                                        o.raw_material = r.id
-                                    INNER JOIN
-                                        category c
-                                    ON
-                                        p.category = c.id
-                                    ORDER BY pr.date DESC;
-                                ';
+                            if ( intval($token_array['level']) == 1 || intval($token_array['level']) == 3 || intval($token_array['level']) == 5 ) {
+                                if ( intval($token_array['level']) == 5 ) {
+                                    $sql = '
+                                        SELECT
+                                            pr.id AS id,
+                                            us.name AS solicitor,
+                                            ud.name AS designated,
+                                            p.name AS product,
+                                            c.name AS category,
+                                            r.name AS raw_material,
+                                            r.stock AS stock,
+                                            o.quantity_product_requested AS quantity_product_requested,
+                                            pr.quantity_product_produced AS quantity_product_produced,
+                                            pr.quantity_product_losted AS quantity_product_losted,
+                                            o.quantity_raw_material_limit AS quantity_raw_material_limit,
+                                            pr.quantity_raw_material_used AS quantity_raw_material_used,
+                                            pr.quantity_raw_material_losted AS quantity_raw_material_losted,
+                                            pr.justification AS justification,
+                                            o.status_order AS status,
+                                            pr.situation AS situation,
+                                            pr.date_initial AS date_created,
+                                            pr.date_final AS date_updated
+                                        FROM
+                                            production pr
+                                        INNER JOIN
+                                            orders o
+                                        ON
+                                            pr.ordered = o.id
+                                        INNER JOIN
+                                            users us
+                                        ON
+                                            o.solicitor = us.id
+                                        LEFT JOIN
+                                            users ud
+                                        ON
+                                            o.designated = ud.id
+                                        INNER JOIN
+                                            products p
+                                        ON
+                                            o.product = p.id
+                                        INNER JOIN
+                                            raw_materials r
+                                        ON
+                                            o.raw_material = r.id
+                                        INNER JOIN
+                                            category c
+                                        ON
+                                            p.category = c.id
+                                        WHERE
+                                            ud.id = :id
+                                        ORDER BY pr.date_initial DESC;
+                                    ';
 
-                                $productions = $this->db->fetchAll($sql);
+                                    $query = $this->db->query(
+                                        $sql,
+                                        [
+                                            'id' => intval($token_array['id'])
+                                        ]
+                                    );
+
+                                    $productions = $query->fetchAll();
+                                } else if ( intval($token_array['level']) == 3 ) {
+                                    $sql = '
+                                        SELECT
+                                            pr.id AS id,
+                                            us.name AS solicitor,
+                                            ud.name AS designated,
+                                            p.name AS product,
+                                            c.name AS category,
+                                            r.name AS raw_material,
+                                            r.stock AS stock,
+                                            o.quantity_product_requested AS quantity_product_requested,
+                                            pr.quantity_product_produced AS quantity_product_produced,
+                                            pr.quantity_product_losted AS quantity_product_losted,
+                                            o.quantity_raw_material_limit AS quantity_raw_material_limit,
+                                            pr.quantity_raw_material_used AS quantity_raw_material_used,
+                                            pr.quantity_raw_material_losted AS quantity_raw_material_losted,
+                                            pr.justification AS justification,
+                                            o.status_order AS status,
+                                            pr.situation AS situation,
+                                            pr.date_initial AS date_created,
+                                            pr.date_final AS date_updated
+                                        FROM
+                                            production pr
+                                        INNER JOIN
+                                            orders o
+                                        ON
+                                            pr.ordered = o.id
+                                        INNER JOIN
+                                            users us
+                                        ON
+                                            o.solicitor = us.id
+                                        LEFT JOIN
+                                            users ud
+                                        ON
+                                            o.designated = ud.id
+                                        INNER JOIN
+                                            products p
+                                        ON
+                                            o.product = p.id
+                                        INNER JOIN
+                                            raw_materials r
+                                        ON
+                                            o.raw_material = r.id
+                                        INNER JOIN
+                                            category c
+                                        ON
+                                            p.category = c.id
+                                        WHERE
+                                            us.id = :id
+                                        ORDER BY pr.date_initial DESC;
+                                    ';
+
+                                    $query = $this->db->query(
+                                        $sql,
+                                        [
+                                            'id' => intval($token_array['id'])
+                                        ]
+                                    );
+
+                                    $productions = $query->fetchAll();
+                                } else {
+                                    $sql = '
+                                        SELECT
+                                            pr.id AS id,
+                                            us.name AS solicitor,
+                                            ud.name AS designated,
+                                            p.name AS product,
+                                            c.name AS category,
+                                            r.name AS raw_material,
+                                            r.stock AS stock,
+                                            o.quantity_product_requested AS quantity_product_requested,
+                                            pr.quantity_product_produced AS quantity_product_produced,
+                                            pr.quantity_product_losted AS quantity_product_losted,
+                                            o.quantity_raw_material_limit AS quantity_raw_material_limit,
+                                            pr.quantity_raw_material_used AS quantity_raw_material_used,
+                                            pr.quantity_raw_material_losted AS quantity_raw_material_losted,
+                                            pr.justification AS justification,
+                                            o.status_order AS status,
+                                            pr.situation AS situation,
+                                            pr.date_initial AS date_created,
+                                            pr.date_final AS date_updated
+                                        FROM
+                                            production pr
+                                        INNER JOIN
+                                            orders o
+                                        ON
+                                            pr.ordered = o.id
+                                        INNER JOIN
+                                            users us
+                                        ON
+                                            o.solicitor = us.id
+                                        LEFT JOIN
+                                            users ud
+                                        ON
+                                            o.designated = ud.id
+                                        INNER JOIN
+                                            products p
+                                        ON
+                                            o.product = p.id
+                                        INNER JOIN
+                                            raw_materials r
+                                        ON
+                                            o.raw_material = r.id
+                                        INNER JOIN
+                                            category c
+                                        ON
+                                            p.category = c.id
+                                        ORDER BY pr.date_initial DESC;
+                                    ';
+
+                                    $productions = $this->db->fetchAll($sql);
+                                }
 
                                 if ( !empty($productions) ) {
                                     foreach ($productions as $key => $production) {
-                                        $date = new \DateTime($production['date']);
+                                        $date_created = new \DateTime($production['date_created']);
+
+                                        if ( $production['date_updated'] != NULL ) {
+                                            $date = new \DateTime($production['date_updated']);
+                                            $date_updated = $date->format('d/m/Y H:i:s');
+                                        } else {
+                                            $date_updated = NULL;
+                                        }
 
                                         $contents[$key] = [
                                             'production' => [
                                                 'id'                           => $production['id'],
                                                 'solicitor'                    => $production['solicitor'],
+                                                'designated'                   => $production['designated'],
                                                 'product'                      => $production['product'],
                                                 'category'                     => $production['category'],
                                                 'raw_material'                 => $production['raw_material'],
@@ -97,7 +235,10 @@
                                                 'quantity_raw_material_used'   => $production['quantity_raw_material_used'],
                                                 'quantity_raw_material_losted' => $production['quantity_raw_material_losted'],
                                                 'justification'                => $production['justification'],
-                                                'date'                         => $date->format('d/m/Y H:i:s')
+                                                'status'                       => $production['status'],
+                                                'situation'                    => $production['situation'],
+                                                'date_created'                 => $date_created->format('d/m/Y H: i: s'),
+                                                'date_updated'                 => $date_updated
                                             ]
                                         ];
                                     }
@@ -187,13 +328,16 @@
 
                     if ( date(\DateTime::ISO8601) <= $nbf_array ) {
                         if ( intval($token_array['situation']) == 1 ) {
-                            if ( intval($token_array['level']) == 0 || intval($token_array['level']) == 1 ) {
+                            if ( intval($token_array['level']) == 1 || intval($token_array['level']) == 3 || intval($token_array['level']) == 5 ) {
                                 $production->setId($id);
 
                                 $sql = '
                                     SELECT
                                         pr.id AS id,
-                                        u.name AS solicitor,
+                                        us.id AS id_solicitor,
+                                        us.name AS solicitor,
+                                        ud.id AS id_designated,
+                                        ud.name AS designated,
                                         p.name AS product,
                                         c.name AS category,
                                         r.name AS raw_material,
@@ -205,7 +349,10 @@
                                         pr.quantity_raw_material_used AS quantity_raw_material_used,
                                         pr.quantity_raw_material_losted AS quantity_raw_material_losted,
                                         pr.justification AS justification,
-                                        pr.date AS date
+                                        o.status_order AS status,
+                                        pr.situation AS situation,
+                                        pr.date_initial AS date_created,
+                                        pr.date_final AS date_updated
                                     FROM
                                         production pr
                                     INNER JOIN
@@ -213,9 +360,13 @@
                                     ON
                                         pr.ordered = o.id
                                     INNER JOIN
-                                        users u
+                                        users us
                                     ON
-                                        pr.user = u.id
+                                        o.solicitor = us.id
+                                    LEFT JOIN
+                                        users ud
+                                    ON
+                                        o.designated = ud.id
                                     INNER JOIN
                                         products p
                                     ON
@@ -230,7 +381,7 @@
                                         p.category = c.id
                                     WHERE
                                         pr.id = :id
-                                    ORDER BY pr.date DESC;
+                                    ORDER BY pr.date_initial DESC;
                                 ';
 
                                 $query = $this->db->query(
@@ -243,34 +394,56 @@
                                 $row = $query->numRows();
                                 $result = $query->fetch();
 
-                                if ( $row == 1 ) {
-                                    $date = new \DateTime($result['date']);
+                                if ( intval($token_array['level']) == 1 || ( intval($token_array['id']) == intval($result['id_solicitor']) ||
+                                     intval($token_array['id']) == intval($result['id_designated']) ) ) {
+                                    if ( $row == 1 ) {
+                                        $date_created = new \DateTime($result['date_created']);
 
-                                    $contents = [
-                                        'production' => [
-                                            'id'                           => $result['id'],
-                                            'solicitor'                    => $result['solicitor'],
-                                            'product'                      => $result['product'],
-                                            'category'                     => $result['category'],
-                                            'raw_material'                 => $result['raw_material'],
-                                            'stock'                        => $result['stock'],
-                                            'quantity_product_requested'   => $result['quantity_product_requested'],
-                                            'quantity_product_produced'    => $result['quantity_product_produced'],
-                                            'quantity_product_losted'      => $result['quantity_product_losted'],
-                                            'quantity_raw_material_limit'  => $result['quantity_raw_material_limit'],
-                                            'quantity_raw_material_used'   => $result['quantity_raw_material_used'],
-                                            'quantity_raw_material_losted' => $result['quantity_raw_material_losted'],
-                                            'justification'                => $result['justification'],
-                                            'date'                         => $date->format('d/m/Y H:i:s')
-                                        ]
-                                    ];
-
-                                    $response
-                                        ->setJsonContent($contents, JSON_PRETTY_PRINT, 200)
-                                        ->send();
+                                        if ( $result['date_updated'] != NULL ) {
+                                            $date = new \DateTime($result['date_updated']);
+                                            $date_updated = $date->format('d/m/Y H:i:s');
+                                        } else {
+                                            $date_updated = NULL;
+                                        }
+    
+                                        $contents = [
+                                            'production' => [
+                                                'id'                           => $result['id'],
+                                                'solicitor'                    => $result['solicitor'],
+                                                'designated'                   => $result['designated'],
+                                                'product'                      => $result['product'],
+                                                'category'                     => $result['category'],
+                                                'raw_material'                 => $result['raw_material'],
+                                                'stock'                        => $result['stock'],
+                                                'quantity_product_requested'   => $result['quantity_product_requested'],
+                                                'quantity_product_produced'    => $result['quantity_product_produced'],
+                                                'quantity_product_losted'      => $result['quantity_product_losted'],
+                                                'quantity_raw_material_limit'  => $result['quantity_raw_material_limit'],
+                                                'quantity_raw_material_used'   => $result['quantity_raw_material_used'],
+                                                'quantity_raw_material_losted' => $result['quantity_raw_material_losted'],
+                                                'justification'                => $result['justification'],
+                                                'status'                       => $result['status'],
+                                                'situation'                    => $result['situation'],
+                                                'date_created'                 => $date_created->format('d/m/Y H: i: s'),
+                                                'date_updated'                 => $date_updated
+                                            ]
+                                        ];
+    
+                                        $response
+                                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 200)
+                                            ->send();
+                                    } else {
+                                        $contents = [
+                                            'msg' => 'Produto solicitado ainda não foi produzido!'
+                                        ];
+                        
+                                        $response
+                                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
+                                            ->send();
+                                    }
                                 } else {
                                     $contents = [
-                                        'msg' => 'Produto solicitado ainda não foi produzido!'
+                                        'msg' => 'Você não possui autorização para visualizar a produção desse produto!'
                                     ];
                     
                                     $response
