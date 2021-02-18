@@ -419,18 +419,10 @@
                     if ( date(\DateTime::ISO8601) <= $nbf_array ) {
                         if ( intval($token_array['situation']) == 1 ) {
                             if ( intval($token_array['level']) == 1 || intval($token_array['level']) == 2 ) {
-                                if ( !empty($request->get('name')) && !empty($request->get('email')) && !empty($request->get('password')) ) {
-                                    if ( !is_numeric($request->get('level') || $request->get('level') < 1) ) {
+                                if ( !empty($request->get('name')) && !empty($request->get('email')) && !empty($request->get('password')) && is_numeric($request->get('level')) ) {
+                                    if ( $request->get('level') < 1 ) {
                                         $contents = [
                                             'msg' => 'Valor informado para cargo está diferente do permitido!'
-                                        ];
-                        
-                                        $response
-                                            ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
-                                            ->send();
-                                    } else if ( (!is_numeric($request->get('situation'))) || ($request->get('situation') != 0 || $request->get('situation') != 1) ) {
-                                        $contents = [
-                                            'msg' => 'Valor informado para situação está diferente do permitido!'
                                         ];
                         
                                         $response
@@ -492,7 +484,7 @@
                                                         $users->setEmail($request->get('email'));
                                                         $users->setPassword($password_hashed);
                                                         $users->setLevel(intval($request->get('level')));
-                                                        $users->setSituation(intval($request->get('situation')));
+                                                        $users->setSituation(1);
             
                                                         $sql = '
                                                             INSERT INTO users
@@ -1445,7 +1437,8 @@
                                         $_SESSION['user'] = $users->getEmail();
 
                                         $contents = [
-                                            'token' => $token
+                                            'token' => $token,
+                                            'level' => $users->getLevel()
                                         ];
                         
                                         $response
