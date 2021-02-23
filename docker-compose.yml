@@ -8,6 +8,7 @@ services:
       dockerfile: Dockerfile
     restart: "no"
     ports:
+      - "80:80"
       - "9000:80"
     volumes:
       - ".:/var/www/html"
