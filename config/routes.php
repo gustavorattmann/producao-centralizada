@@ -104,11 +104,14 @@
 
     $app->notFound(
         function () use ($app) {
+            $contents = [
+                'msg' => 'Página não encontrada...',
+                'status' => 404
+            ];
+
             $app
                 ->response
-                ->setStatusCode(404)
-                ->sendHeaders()
-                ->setContent('Página não encontrada...')
+                ->setJsonContent($contents, JSON_PRETTY_PRINT, 404)
                 ->send();
         }
     );
