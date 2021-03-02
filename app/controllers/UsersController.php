@@ -435,7 +435,8 @@
                                 if ( !empty($request->get('name')) && !empty($request->get('email')) && !empty($request->get('password')) && is_numeric($request->get('level')) ) {
                                     if ( $request->get('level') < 1 ) {
                                         $contents = [
-                                            'msg' => 'Valor informado para cargo está diferente do permitido!'
+                                            'msg'    => 'Valor informado para cargo está diferente do permitido!',
+                                            'status' => 400
                                         ];
                         
                                         $response
@@ -463,7 +464,8 @@
 
                                             if ( $email_verified->numRows() == 1 ) {
                                                 $contents = [
-                                                    'msg' => 'Usuário já está cadastrado!'
+                                                    'msg'    => 'Usuário já está cadastrado!',
+                                                    'status' => 400
                                                 ];
                                 
                                                 $response
@@ -878,16 +880,15 @@
                                     } else {
                                         if ( ( intval($token_array['level']) == 1 || intval($token_array['level']) == 2 ) &&
                                              ( !is_numeric($request->getPut('level')) || intval($request->getPut('level')) < 1 ) ) {
-                                            $contents = [
-                                                'msg'    => 'Valor informado para cargo está diferente do permitido!',
-                                                'status' => 400
-                                            ];
+                                            $msg = 'Valor informado para cargo está diferente do permitido!';
                                         } else {
-                                            $contents = [
-                                                'msg'    => 'Valor informado para situação está diferente do permitido!',
-                                                'status' => 400
-                                            ];
+                                            $msg = 'Valor informado para situação está diferente do permitido!';
                                         }
+
+                                        $contents = [
+                                            'msg'    => $msg,
+                                            'status' => 400
+                                        ];
 
                                         $response
                                             ->setJsonContent($contents, JSON_PRETTY_PRINT, 400)
@@ -1011,7 +1012,8 @@
                                     
                                     if ( $security->checkHash($request->getPut('password'), $user['password']) ) {
                                         $contents = [
-                                            'msg' => 'Senhas iguais!'
+                                            'msg'    => 'Senhas iguais!',
+                                            'status' => 400
                                         ];
                         
                                         $response
