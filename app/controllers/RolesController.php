@@ -48,11 +48,9 @@
                                 if ( !empty($result) ) {
                                     foreach ($result as $key => $role) {
                                         $contents[$key] = [
-                                            'role' => [
-                                                'id'        => $role['id'],
-                                                'name'      => $role['name'],
-                                                'situation' => $role['situation']
-                                            ]
+                                            'id'        => $role['id'],
+                                            'name'      => $role['name'],
+                                            'situation' => $role['situation']
                                         ];
                                     }
 

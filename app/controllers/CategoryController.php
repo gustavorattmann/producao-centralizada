@@ -48,11 +48,9 @@
                                 if ( !empty($result) ) {
                                     foreach ($result as $key => $category) {
                                         $contents[$key] = [
-                                            'category' => [
-                                                'id'        => $category['id'],
-                                                'name'      => $category['name'],
-                                                'situation' => $category['situation']
-                                            ]
+                                            'id'        => $category['id'],
+                                            'name'      => $category['name'],
+                                            'situation' => $category['situation']
                                         ];
                                     }
 
