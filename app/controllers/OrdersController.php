@@ -202,20 +202,18 @@
                                         }
 
                                         $contents[$key] = [
-                                            'order' => [
-                                                'id'                          => $order['id'],
-                                                'solicitor'                   => $order['solicitor'],
-                                                'designated'                  => $order['designated'],
-                                                'product'                     => $order['product'],
-                                                'category'                    => $order['category'],
-                                                'raw_material'                => $order['raw_material'],
-                                                'stock'                       => $order['stock'],
-                                                'quantity_product_requested'  => $order['quantity_product_requested'],
-                                                'quantity_raw_material_limit' => $order['quantity_raw_material_limit'],
-                                                'status'                      => $order['status'],
-                                                'date_created'                => $date_created->format('d/m/Y H:i:s'),
-                                                'date_updated'                => $date_updated
-                                            ]
+                                            'id'                          => $order['id'],
+                                            'solicitor'                   => $order['solicitor'],
+                                            'designated'                  => $order['designated'],
+                                            'product'                     => $order['product'],
+                                            'category'                    => $order['category'],
+                                            'raw_material'                => $order['raw_material'],
+                                            'stock'                       => $order['stock'],
+                                            'quantity_product_requested'  => $order['quantity_product_requested'],
+                                            'quantity_raw_material_limit' => $order['quantity_raw_material_limit'],
+                                            'status'                      => $order['status'],
+                                            'date_created'                => $date_created->format('d/m/Y H:i:s'),
+                                            'date_updated'                => $date_updated
                                         ];
                                     }
 
@@ -224,7 +222,8 @@
                                         ->send();
                                 } else {
                                     $contents = [
-                                        'msg' => 'Nenhum pedido encontrado!'
+                                        'msg'    => 'Nenhum pedido encontrado!',
+                                        'status' => 400
                                     ];
                     
                                     $response
@@ -233,7 +232,8 @@
                                 }
                             } else {
                                 $contents = [
-                                    'msg' => 'Você não possui autorização para acessar essa página!'
+                                    'msg'    => 'Você não possui autorização para acessar essa página!',
+                                    'status' => 401
                                 ];
                 
                                 $response
@@ -242,7 +242,8 @@
                             }
                         } else {
                             $contents = [
-                                'msg' => 'Seu usuário não está ativo, contate um administrador ou RH!'
+                                'msg'    => 'Seu usuário não está ativo, contate um administrador ou RH!',
+                                'status' => 401
                             ];
             
                             $response
@@ -251,7 +252,8 @@
                         }
                     } else {
                         $contents = [
-                            'msg' => 'Sua sessão expirou. Por favor, faça login novamente!'
+                            'msg'    => 'Sua sessão expirou. Por favor, faça login novamente!',
+                            'status' => 401
                         ];
         
                         $response
@@ -260,7 +262,8 @@
                     }
                 } else {
                     $contents = [
-                        'msg' => 'Token inválido!'
+                        'msg'    => 'Token inválido!',
+                        'status' => 401
                     ];
     
                     $response
@@ -269,7 +272,8 @@
                 }
             } else {
                 $contents = [
-                    'msg' => 'Seu usuário não está logado. Por favor, faça login!'
+                    'msg'    => 'Seu usuário não está logado. Por favor, faça login!',
+                    'status' => 401
                 ];
 
                 $response
@@ -377,20 +381,18 @@
                                         }
     
                                         $contents = [
-                                            'order' => [
-                                                'id'                          => $result['id'],
-                                                'solicitor'                   => $result['solicitor'],
-                                                'designated'                  => $result['designated'],
-                                                'product'                     => $result['product'],
-                                                'category'                    => $result['category'],
-                                                'raw_material'                => $result['raw_material'],
-                                                'stock'                       => $result['stock'],
-                                                'quantity_product_requested'  => $result['quantity_product_requested'],
-                                                'quantity_raw_material_limit' => $result['quantity_raw_material_limit'],
-                                                'status'                      => $result['status'],
-                                                'date_created'                => $date_created->format('d/m/Y H:i:s'),
-                                                'date_updated'                => $date_updated
-                                            ]
+                                            'id'                          => $result['id'],
+                                            'solicitor'                   => $result['solicitor'],
+                                            'designated'                  => $result['designated'],
+                                            'product'                     => $result['product'],
+                                            'category'                    => $result['category'],
+                                            'raw_material'                => $result['raw_material'],
+                                            'stock'                       => $result['stock'],
+                                            'quantity_product_requested'  => $result['quantity_product_requested'],
+                                            'quantity_raw_material_limit' => $result['quantity_raw_material_limit'],
+                                            'status'                      => $result['status'],
+                                            'date_created'                => $date_created->format('d/m/Y H:i:s'),
+                                            'date_updated'                => $date_updated
                                         ];
     
                                         $response
@@ -398,7 +400,8 @@
                                             ->send();
                                     } else {
                                         $contents = [
-                                            'msg' => 'Pedido não encontrado!'
+                                            'msg'    => 'Pedido não encontrado!',
+                                            'status' => 400
                                         ];
                         
                                         $response
@@ -407,7 +410,8 @@
                                     }
                                 } else {
                                     $contents = [
-                                        'msg' => 'Você não possui autorização para visualizar esse pedido!'
+                                        'msg'    => 'Você não possui autorização para visualizar esse pedido!',
+                                        'status' => 400
                                     ];
                     
                                     $response
@@ -416,7 +420,8 @@
                                 }
                             } else {
                                 $contents = [
-                                    'msg' => 'Você não possui autorização para acessar essa página!'
+                                    'msg'    => 'Você não possui autorização para acessar essa página!',
+                                    'status' => 401
                                 ];
                 
                                 $response
@@ -425,7 +430,8 @@
                             }
                         } else {
                             $contents = [
-                                'msg' => 'Seu usuário não está ativo, contate um administrador ou RH!'
+                                'msg'    => 'Seu usuário não está ativo, contate um administrador ou RH!',
+                                'status' => 401
                             ];
             
                             $response
@@ -434,7 +440,8 @@
                         }
                     } else {
                         $contents = [
-                            'msg' => 'Sua sessão expirou. Por favor, faça login novamente!'
+                            'msg'    => 'Sua sessão expirou. Por favor, faça login novamente!',
+                            'status' => 401
                         ];
         
                         $response
@@ -443,7 +450,8 @@
                     }
                 } else {
                     $contents = [
-                        'msg' => 'Token inválido!'
+                        'msg'    => 'Token inválido!',
+                        'status' => 401
                     ];
     
                     $response
@@ -452,7 +460,8 @@
                 }
             } else {
                 $contents = [
-                    'msg' => 'Seu usuário não está logado. Por favor, faça login!'
+                    'msg'    => 'Seu usuário não está logado. Por favor, faça login!',
+                    'status' => 401
                 ];
 
                 $response
@@ -496,7 +505,8 @@
                                      ( !empty($request->get('quantity_raw_material_limit')) || is_numeric($request->get('quantity_raw_material_limit')) ) ) {
                                     if ( intval($token_array['level']) == 1 && $request->get('solicitor') < 1 ) {
                                         $contents = [
-                                            'msg' => 'Valor informado para gerente está diferente do permitido!'
+                                            'msg'    => 'Valor informado para gerente está diferente do permitido!',
+                                            'status' => 400
                                         ];
                         
                                         $response
@@ -504,7 +514,8 @@
                                             ->send();
                                     } else if ( $request->get('designated') < 1 ) {
                                         $contents = [
-                                            'msg' => 'Valor informado para funcionário está diferente do permitido!'
+                                            'msg'    => 'Valor informado para funcionário está diferente do permitido!',
+                                            'status' => 400
                                         ];
                         
                                         $response
@@ -512,7 +523,8 @@
                                             ->send();
                                     } else if ( $request->get('product') < 1 ) {
                                         $contents = [
-                                            'msg' => 'Valor informado para produto está diferente do permitido!'
+                                            'msg'    => 'Valor informado para produto está diferente do permitido!',
+                                            'status' => 400
                                         ];
                         
                                         $response
@@ -520,7 +532,8 @@
                                             ->send();
                                     } else if ( $request->get('raw_material') < 1 ) {
                                         $contents = [
-                                            'msg' => 'Valor informado para matéria-prima está diferente do permitido!'
+                                            'msg'    => 'Valor informado para matéria-prima está diferente do permitido!',
+                                            'status' => 400
                                         ];
                         
                                         $response
@@ -528,7 +541,8 @@
                                             ->send();
                                     } else if ( $request->get('quantity_product_requested') < 1 ) {
                                         $contents = [
-                                            'msg' => 'Valor informado para quantidade de produto requisitado está diferente do permitido!'
+                                            'msg'    => 'Valor informado para quantidade de produto requisitado está diferente do permitido!',
+                                            'status' => 400
                                         ];
                         
                                         $response
@@ -536,7 +550,8 @@
                                             ->send();
                                     } else if ( $request->get('quantity_raw_material_limit') < 1 ) {
                                         $contents = [
-                                            'msg' => 'Valor informado para quantidade necessária de matéria-prima está diferente do permitido!'
+                                            'msg'    => 'Valor informado para quantidade necessária de matéria-prima está diferente do permitido!',
+                                            'status' => 400
                                         ];
                         
                                         $response
@@ -650,7 +665,8 @@
 
                                                             if ( $success ) {
                                                                 $contents = [
-                                                                    'msg' => 'Cadastro realizado com sucesso!'
+                                                                    'msg'    => 'Cadastro realizado com sucesso!',
+                                                                    'status' => 201
                                                                 ];
                                                 
                                                                 $response
@@ -658,7 +674,8 @@
                                                                     ->send();
                                                             } else {
                                                                 $contents = [
-                                                                    'msg' => 'Falha no cadastro!'
+                                                                    'msg'    => 'Falha no cadastro!',
+                                                                    'status' => 400
                                                                 ];
                                                 
                                                                 $response
@@ -671,7 +688,8 @@
                                                             $this->db->rollback();
 
                                                             $contents = [
-                                                                'msg' => 'Ocorreu um erro em nosso servidor, tente mais tarde!'
+                                                                'msg'    => 'Ocorreu um erro em nosso servidor, tente mais tarde!',
+                                                                'status' => 500
                                                             ];
                                             
                                                             $response
@@ -680,7 +698,8 @@
                                                         }
                                                     } else if ( intval($request->get('quantity_raw_material_limit')) < 0 ) {
                                                         $contents = [
-                                                            'msg' => 'A quantidade de matéria-prima requisitada precisa ser maior que 0!'
+                                                            'msg'    => 'A quantidade de matéria-prima requisitada precisa ser maior que 0!',
+                                                            'status' => 400
                                                         ];
                                         
                                                         $response
@@ -688,7 +707,8 @@
                                                             ->send();
                                                     } else {
                                                         $contents = [
-                                                            'msg' => 'A quantidade de matéria-prima requisitada é maior que a quantidade disponível em estoque!'
+                                                            'msg'    => 'A quantidade de matéria-prima requisitada é maior que a quantidade disponível em estoque!',
+                                                            'status' => 400
                                                         ];
                                         
                                                         $response
@@ -697,7 +717,8 @@
                                                     }
                                                 } else {
                                                     $contents = [
-                                                        'msg' => 'Matéria-prima não encontrada!'
+                                                        'msg'    => 'Matéria-prima não encontrada!',
+                                                        'status' => 400
                                                     ];
                                     
                                                     $response
@@ -706,7 +727,8 @@
                                                 }
                                             } else {
                                                 $contents = [
-                                                    'msg' => 'Produto não encontrado!'
+                                                    'msg'    => 'Produto não encontrado!',
+                                                    'status' => 400
                                                 ];
                                 
                                                 $response
@@ -715,7 +737,8 @@
                                             }
                                         } else {
                                             $contents = [
-                                                'msg' => 'Funcionário não encontrado!'
+                                                'msg'    => 'Funcionário não encontrado!',
+                                                'status' => 400
                                             ];
                             
                                             $response
@@ -725,7 +748,8 @@
                                     }
                                 } else {
                                     $contents = [
-                                        'msg' => 'Dados incompletos!'
+                                        'msg'    => 'Dados incompletos!',
+                                        'status' => 400
                                     ];
                     
                                     $response
@@ -734,7 +758,8 @@
                                 }
                             } else {
                                 $contents = [
-                                    'msg' => 'Você não possui autorização para acessar essa página!'
+                                    'msg'    => 'Você não possui autorização para acessar essa página!',
+                                    'status' => 401
                                 ];
                 
                                 $response
@@ -743,7 +768,8 @@
                             }
                         } else {
                             $contents = [
-                                'msg' => 'Seu usuário não está ativo, contate um administrador ou RH!'
+                                'msg'    => 'Seu usuário não está ativo, contate um administrador ou RH!',
+                                'status' => 401
                             ];
             
                             $response
@@ -752,7 +778,8 @@
                         }
                     } else {
                         $contents = [
-                            'msg' => 'Sua sessão expirou. Por favor, faça login novamente!'
+                            'msg'    => 'Sua sessão expirou. Por favor, faça login novamente!',
+                            'status' => 401
                         ];
         
                         $response
@@ -761,7 +788,8 @@
                     }
                 } else {
                     $contents = [
-                        'msg' => 'Token inválido!'
+                        'msg'    => 'Token inválido!',
+                        'status' => 401
                     ];
     
                     $response
@@ -770,7 +798,8 @@
                 }
             } else {
                 $contents = [
-                    'msg' => 'Seu usuário não está logado. Por favor, faça login!'
+                    'msg'    => 'Seu usuário não está logado. Por favor, faça login!',
+                    'status' => 401
                 ];
 
                 $response
@@ -837,7 +866,8 @@
                                              ( !empty($request->getPut('situation')) || is_numeric($request->getPut('situation')) ) ) {
                                             if ( intval($token_array['level']) == 1 && $request->getPut('solicitor') < 1 ) {
                                                 $contents = [
-                                                    'msg' => 'Valor informado para gerente está diferente do permitido!'
+                                                    'msg'    => 'Valor informado para gerente está diferente do permitido!',
+                                                    'status' => 400
                                                 ];
                                 
                                                 $response
@@ -845,7 +875,8 @@
                                                     ->send();
                                             } else if ( $request->getPut('designated') < 1 ) {
                                                 $contents = [
-                                                    'msg' => 'Valor informado para funcionário está diferente do permitido!'
+                                                    'msg'    => 'Valor informado para funcionário está diferente do permitido!',
+                                                    'status' => 400
                                                 ];
                                 
                                                 $response
@@ -853,7 +884,8 @@
                                                     ->send();
                                             } else if ( $request->getPut('product') < 1 ) {
                                                 $contents = [
-                                                    'msg' => 'Valor informado para produto está diferente do permitido!'
+                                                    'msg'    => 'Valor informado para produto está diferente do permitido!',
+                                                    'status' => 400
                                                 ];
                                 
                                                 $response
@@ -861,7 +893,8 @@
                                                     ->send();
                                             } else if ( $request->getPut('raw_material') < 1 ) {
                                                 $contents = [
-                                                    'msg' => 'Valor informado para matéria-prima está diferente do permitido!'
+                                                    'msg'    => 'Valor informado para matéria-prima está diferente do permitido!',
+                                                    'status' => 400
                                                 ];
                                 
                                                 $response
@@ -869,7 +902,8 @@
                                                     ->send();
                                             } else if ( $request->getPut('quantity_product_requested') < 1 ) {
                                                 $contents = [
-                                                    'msg' => 'Valor informado para quantidade de produto requisitado está diferente do permitido!'
+                                                    'msg'    => 'Valor informado para quantidade de produto requisitado está diferente do permitido!',
+                                                    'status' => 400
                                                 ];
                                 
                                                 $response
@@ -877,7 +911,8 @@
                                                     ->send();
                                             } else if ( $request->getPut('quantity_raw_material_limit') < 1 ) {
                                                 $contents = [
-                                                    'msg' => 'Valor informado para quantidade necessária de matéria-prima está diferente do permitido!'
+                                                    'msg'    => 'Valor informado para quantidade necessária de matéria-prima está diferente do permitido!',
+                                                    'status' => 400
                                                 ];
                                 
                                                 $response
@@ -885,7 +920,8 @@
                                                     ->send();
                                             } else if ( $request->getPut('status') < 1 || ($request->getPut('status') != 3 && $request->getPut('status') != 5) ) {
                                                 $contents = [
-                                                    'msg' => 'Valor informado para status de pedido está diferente do permitido!'
+                                                    'msg'    => 'Valor informado para status de pedido está diferente do permitido!',
+                                                    'status' => 400
                                                 ];
                                 
                                                 $response
@@ -893,7 +929,8 @@
                                                     ->send();
                                             } else if ( $request->getPut('situation') != 0 && $request->getPut('situation') != 1 ) {
                                                 $contents = [
-                                                    'msg' => 'Valor informado para situação está diferente do permitido!'
+                                                    'msg'    => 'Valor informado para situação está diferente do permitido!',
+                                                    'status' => 400
                                                 ];
                                 
                                                 $response
@@ -1074,7 +1111,8 @@
                     
                                                                             if ( $success ) {
                                                                                 $contents = [
-                                                                                    'msg' => 'Pedido alterado com sucesso!'
+                                                                                    'msg'    => 'Pedido alterado com sucesso!',
+                                                                                    'status' => 201
                                                                                 ];
                                                                 
                                                                                 $response
@@ -1082,7 +1120,8 @@
                                                                                     ->send();
                                                                             } else {
                                                                                 $contents = [
-                                                                                    'msg' => 'Não foi possível alterar pedido!'
+                                                                                    'msg'    => 'Não foi possível alterar pedido!',
+                                                                                    'status' => 400
                                                                                 ];
                                                                 
                                                                                 $response
@@ -1095,7 +1134,8 @@
                                                                             $this->db->rollback();
                     
                                                                             $contents = [
-                                                                                'msg' => 'Ocorreu um erro em nosso servidor, tente mais tarde!'
+                                                                                'msg'    => 'Ocorreu um erro em nosso servidor, tente mais tarde!',
+                                                                                'status' => 500
                                                                             ];
                                                             
                                                                             $response
@@ -1104,7 +1144,8 @@
                                                                         }
                                                                     } else {
                                                                         $contents = [
-                                                                            'msg' => 'Digite pelo menos um campo com valor diferente do atual!'
+                                                                            'msg'    => 'Digite pelo menos um campo com valor diferente do atual!',
+                                                                            'status' => 400
                                                                         ];
                                                         
                                                                         $response
@@ -1113,7 +1154,8 @@
                                                                     }
                                                                 } else if ( intval($request->get('quantity_raw_material_limit')) < $result['stock'] ) {
                                                                     $contents = [
-                                                                        'msg' => 'A quantidade de matéria-prima requisitada precisa ser maior que 0!'
+                                                                        'msg'    => 'A quantidade de matéria-prima requisitada precisa ser maior que 0!',
+                                                                        'status' => 400
                                                                     ];
                                                     
                                                                     $response
@@ -1121,7 +1163,8 @@
                                                                         ->send();
                                                                 } else {
                                                                     $contents = [
-                                                                        'msg' => 'A quantidade de matéria-prima requisitada é maior que a quantidade disponível em estoque!'
+                                                                        'msg'    => 'A quantidade de matéria-prima requisitada é maior que a quantidade disponível em estoque!',
+                                                                        'status' => 400
                                                                     ];
                                                     
                                                                     $response
@@ -1130,7 +1173,8 @@
                                                                 }
                                                             } else {
                                                                 $contents = [
-                                                                    'msg' => 'Matéria-prima não encontrada!'
+                                                                    'msg'    => 'Matéria-prima não encontrada!',
+                                                                    'status' => 400
                                                                 ];
                                                 
                                                                 $response
@@ -1139,7 +1183,8 @@
                                                             }
                                                         } else {
                                                             $contents = [
-                                                                'msg' => 'Produto não encontrado!'
+                                                                'msg'    => 'Produto não encontrado!',
+                                                                'status' => 400
                                                             ];
                                             
                                                             $response
@@ -1148,7 +1193,8 @@
                                                         }
                                                     } else {
                                                         $contents = [
-                                                            'msg' => 'Status de pedido não encontrado!'
+                                                            'msg'    => 'Status de pedido não encontrado!',
+                                                            'status' => 400
                                                         ];
                                         
                                                         $response
@@ -1157,7 +1203,8 @@
                                                     }
                                                 } else {
                                                     $contents = [
-                                                        'msg' => 'Funcionário não encontrado!'
+                                                        'msg'    => 'Funcionário não encontrado!',
+                                                        'status' => 400
                                                     ];
                                     
                                                     $response
@@ -1167,7 +1214,8 @@
                                             }
                                         } else {
                                             $contents = [
-                                                'msg' => 'Dados incompletos!'
+                                                'msg'    => 'Dados incompletos!',
+                                                'status' => 400
                                             ];
                             
                                             $response
@@ -1176,7 +1224,8 @@
                                         }
                                     } else {
                                         $contents = [
-                                            'msg' => 'Você não possui autorização para alterar esse pedido!'
+                                            'msg'    => 'Você não possui autorização para alterar esse pedido!',
+                                            'status' => 400
                                         ];
                         
                                         $response
@@ -1185,7 +1234,8 @@
                                     }
                                 } else {
                                     $contents = [
-                                        'msg' => 'Pedido não encontrado!'
+                                        'msg'    => 'Pedido não encontrado!',
+                                        'status' => 400
                                     ];
                     
                                     $response
@@ -1194,7 +1244,8 @@
                                 }
                             } else {
                                 $contents = [
-                                    'msg' => 'Você não possui autorização para acessar essa página!'
+                                    'msg'    => 'Você não possui autorização para acessar essa página!',
+                                    'status' => 401
                                 ];
                 
                                 $response
@@ -1203,7 +1254,8 @@
                             }
                         } else {
                             $contents = [
-                                'msg' => 'Seu usuário não está ativo, contate um administrador ou RH!'
+                                'msg'    => 'Seu usuário não está ativo, contate um administrador ou RH!',
+                                'status' => 401
                             ];
             
                             $response
@@ -1212,7 +1264,8 @@
                         }
                     } else {
                         $contents = [
-                            'msg' => 'Sua sessão expirou. Por favor, faça login novamente!'
+                            'msg'    => 'Sua sessão expirou. Por favor, faça login novamente!',
+                            'status' => 401
                         ];
         
                         $response
@@ -1221,7 +1274,8 @@
                     }
                 } else {
                     $contents = [
-                        'msg' => 'Token inválido!'
+                        'msg'    => 'Token inválido!',
+                        'status' => 401
                     ];
     
                     $response
@@ -1230,7 +1284,8 @@
                 }
             } else {
                 $contents = [
-                    'msg' => 'Seu usuário não está logado. Por favor, faça login!'
+                    'msg'    => 'Seu usuário não está logado. Por favor, faça login!',
+                    'status' => 401
                 ];
 
                 $response
@@ -1308,7 +1363,8 @@
 
                                             if ( $del ) {
                                                 $contents = [
-                                                    'msg' => 'Pedido deletado com sucesso!'
+                                                    'msg'    => 'Pedido deletado com sucesso!',
+                                                    'status' => 200
                                                 ];
                         
                                                 $response
@@ -1316,7 +1372,8 @@
                                                     ->send();
                                             } else {
                                                 $contents = [
-                                                    'msg' => 'Não foi possível deletar pedido!'
+                                                    'msg'    => 'Não foi possível deletar pedido!',
+                                                    'status' => 400
                                                 ];
                         
                                                 $response
@@ -1329,7 +1386,8 @@
                                             $this->db->rollback();
                     
                                             $contents = [
-                                                'msg' => 'Ocorreu um erro em nosso servidor, tente mais tarde!'
+                                                'msg'    => 'Ocorreu um erro em nosso servidor, tente mais tarde!',
+                                                'status' => 500
                                             ];
                             
                                             $response
@@ -1338,7 +1396,8 @@
                                         }
                                     } else {
                                         $contents = [
-                                            'msg' => 'Você não possui autorização para deletar esse pedido!'
+                                            'msg'    => 'Você não possui autorização para deletar esse pedido!',
+                                            'status' => 400
                                         ];
                         
                                         $response
@@ -1347,7 +1406,8 @@
                                     }
                                 } else {
                                     $contents = [
-                                        'msg' => 'Pedido não encontrado!'
+                                        'msg'    => 'Pedido não encontrado!',
+                                        'status' => 400
                                     ];
                     
                                     $response
@@ -1356,7 +1416,8 @@
                                 }
                             } else {
                                 $contents = [
-                                    'msg' => 'Você não possui autorização para acessar essa página!'
+                                    'msg'    => 'Você não possui autorização para acessar essa página!',
+                                    'status' => 401
                                 ];
                 
                                 $response
@@ -1365,7 +1426,8 @@
                             }
                         } else {
                             $contents = [
-                                'msg' => 'Seu usuário não está ativo, contate um administrador ou RH!'
+                                'msg'    => 'Seu usuário não está ativo, contate um administrador ou RH!',
+                                'status' => 401
                             ];
             
                             $response
@@ -1374,7 +1436,8 @@
                         }
                     } else {
                         $contents = [
-                            'msg' => 'Sua sessão expirou. Por favor, faça login novamente!'
+                            'msg'    => 'Sua sessão expirou. Por favor, faça login novamente!',
+                            'status' => 401
                         ];
         
                         $response
@@ -1383,7 +1446,8 @@
                     }
                 } else {
                     $contents = [
-                        'msg' => 'Token inválido!'
+                        'msg'    => 'Token inválido!',
+                        'status' => 401
                     ];
     
                     $response
@@ -1392,7 +1456,8 @@
                 }
             } else {
                 $contents = [
-                    'msg' => 'Seu usuário não está logado. Por favor, faça login!'
+                    'msg'    => 'Seu usuário não está logado. Por favor, faça login!',
+                    'status' => 401
                 ];
 
                 $response

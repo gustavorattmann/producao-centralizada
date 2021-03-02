@@ -48,11 +48,9 @@
                                 if ( !empty($result) ) {
                                     foreach ($result as $key => $role) {
                                         $contents[$key] = [
-                                            'role' => [
-                                                'id'        => $role['id'],
-                                                'name'      => $role['name'],
-                                                'situation' => $role['situation']
-                                            ]
+                                            'id'        => $role['id'],
+                                            'name'      => $role['name'],
+                                            'situation' => $role['situation']
                                         ];
                                     }
 
@@ -61,7 +59,8 @@
                                         ->send();
                                 } else {
                                     $contents = [
-                                        'msg' => 'Nenhum cargo encontrado!'
+                                        'msg'    => 'Nenhum cargo encontrado!',
+                                        'status' => 400
                                     ];
                     
                                     $response
@@ -70,7 +69,8 @@
                                 }
                             } else {
                                 $contents = [
-                                    'msg' => 'Você não possui autorização para acessar essa página!'
+                                    'msg'    => 'Você não possui autorização para acessar essa página!',
+                                    'status' => 401
                                 ];
                 
                                 $response
@@ -79,7 +79,8 @@
                             }
                         } else {
                             $contents = [
-                                'msg' => 'Seu usuário não está ativo, contate um administrador ou RH!'
+                                'msg'    => 'Seu usuário não está ativo, contate um administrador ou RH!',
+                                'status' => 401
                             ];
             
                             $response
@@ -88,7 +89,8 @@
                         }
                     } else {
                         $contents = [
-                            'msg' => 'Sua sessão expirou. Por favor, faça login novamente!'
+                            'msg'    => 'Sua sessão expirou. Por favor, faça login novamente!',
+                            'status' => 401
                         ];
         
                         $response
@@ -97,7 +99,8 @@
                     }
                 } else {
                     $contents = [
-                        'msg' => 'Token inválido!'
+                        'msg'    => 'Token inválido!',
+                        'status' => 401
                     ];
     
                     $response
@@ -106,7 +109,8 @@
                 }
             } else {
                 $contents = [
-                    'msg' => 'Seu usuário não está logado. Por favor, faça login!'
+                    'msg'    => 'Seu usuário não está logado. Por favor, faça login!',
+                    'status' => 401
                 ];
 
                 $response
@@ -185,7 +189,8 @@
 
                                             if ( $success ) {
                                                 $contents = [
-                                                    'msg' => 'Cargo cadastrado com sucesso!'
+                                                    'msg'    => 'Cargo cadastrado com sucesso!',
+                                                    'status' => 201
                                                 ];
                                 
                                                 $response
@@ -193,7 +198,8 @@
                                                     ->send();
                                             } else {
                                                 $contents = [
-                                                    'msg' => 'Falha ao cadastrar cargo!'
+                                                    'msg'    => 'Falha ao cadastrar cargo!',
+                                                    'status' => 400
                                                 ];
                                 
                                                 $response
@@ -206,7 +212,8 @@
                                             $this->db->rollback();
 
                                             $contents = [
-                                                'msg' => 'Ocorreu um erro em nosso servidor, tente mais tarde!'
+                                                'msg'    => 'Ocorreu um erro em nosso servidor, tente mais tarde!',
+                                                'status' => 500
                                             ];
                             
                                             $response
@@ -215,7 +222,8 @@
                                         }
                                     } else {
                                         $contents = [
-                                            'msg' => 'Esse cargo já está cadastrado!'
+                                            'msg'    => 'Esse cargo já está cadastrado!',
+                                            'status' => 400
                                         ];
 
                                         $response
@@ -224,7 +232,8 @@
                                     }
                                 } else {
                                     $contents = [
-                                        'msg' => 'Dados incompletos!'
+                                        'msg'    => 'Dados incompletos!',
+                                        'status' => 400
                                     ];
                     
                                     $response
@@ -233,7 +242,8 @@
                                 }
                             } else {
                                 $contents = [
-                                    'msg' => 'Você não possui autorização para acessar essa página!'
+                                    'msg' => 'Você não possui autorização para acessar essa página!',
+                                    'status' => 401
                                 ];
                 
                                 $response
@@ -242,7 +252,8 @@
                             }
                         } else {
                             $contents = [
-                                'msg' => 'Seu usuário não está ativo, contate um administrador ou RH!'
+                                'msg'    => 'Seu usuário não está ativo, contate um administrador ou RH!',
+                                'status' => 401
                             ];
             
                             $response
@@ -251,7 +262,8 @@
                         }
                     } else {
                         $contents = [
-                            'msg' => 'Sua sessão expirou. Por favor, faça login novamente!'
+                            'msg'    => 'Sua sessão expirou. Por favor, faça login novamente!',
+                            'status' => 401
                         ];
         
                         $response
@@ -260,7 +272,8 @@
                     }
                 } else {
                     $contents = [
-                        'msg' => 'Token inválido!'
+                        'msg'    => 'Token inválido!',
+                        'status' => 401
                     ];
     
                     $response
@@ -269,7 +282,8 @@
                 }
             } else {
                 $contents = [
-                    'msg' => 'Seu usuário não está logado. Por favor, faça login!'
+                    'msg'    => 'Seu usuário não está logado. Por favor, faça login!',
+                    'status' => 401
                 ];
 
                 $response
@@ -386,7 +400,8 @@
     
                                                         if ( $update ) {
                                                             $contents = [
-                                                                'msg' => 'Cargo alterado com sucesso!'
+                                                                'msg'    => 'Cargo alterado com sucesso!',
+                                                                'status' => 201
                                                             ];
                                             
                                                             $response
@@ -394,7 +409,8 @@
                                                                 ->send();
                                                         } else {
                                                             $contents = [
-                                                                'msg' => 'Falha na alteração de cargo!'
+                                                                'msg'    => 'Falha na alteração de cargo!',
+                                                                'status' => 400
                                                             ];
                                             
                                                             $response
@@ -407,7 +423,8 @@
                                                         $this->db->rollback();
                             
                                                         $contents = [
-                                                            'msg' => 'Ocorreu um erro em nosso servidor, tente mais tarde!'
+                                                            'msg'    => 'Ocorreu um erro em nosso servidor, tente mais tarde!',
+                                                            'status' => 500
                                                         ];
                                         
                                                         $response
@@ -416,7 +433,8 @@
                                                     }
                                                 } else {
                                                     $contents = [
-                                                        'msg' => 'Preencha pelo menos um campo com valor diferente do atual!'
+                                                        'msg'    => 'Preencha pelo menos um campo com valor diferente do atual!',
+                                                        'status' => 400
                                                     ];
                                     
                                                     $response
@@ -425,7 +443,8 @@
                                                 }
                                             } else {
                                                 $contents = [
-                                                    'msg' => 'Já existe um cargo cadastrado com esse nome!'
+                                                    'msg'    => 'Já existe um cargo cadastrado com esse nome!',
+                                                    'status' => 400
                                                 ];
                                 
                                                 $response
@@ -434,7 +453,8 @@
                                             }
                                         } else {
                                             $contents = [
-                                                'msg' => 'Cargo não encontrado!'
+                                                'msg'    => 'Cargo não encontrado!',
+                                                'status' => 400
                                             ];
                             
                                             $response
@@ -443,7 +463,8 @@
                                         }
                                     } else {
                                         $contents = [
-                                            'msg' => 'Valor informado para situação está diferente do permitido!'
+                                            'msg'    => 'Valor informado para situação está diferente do permitido!',
+                                            'status' => 400
                                         ];
                         
                                         $response
@@ -452,7 +473,8 @@
                                     }
                                 } else {
                                     $contents = [
-                                        'msg' => 'Dados incompletos!'
+                                        'msg'    => 'Dados incompletos!',
+                                        'status' => 400
                                     ];
                     
                                     $response
@@ -461,7 +483,8 @@
                                 }
                             } else {
                                 $contents = [
-                                    'msg' => 'Você não possui autorização para acessar essa página!'
+                                    'msg'    => 'Você não possui autorização para acessar essa página!',
+                                    'status' => 401
                                 ];
                 
                                 $response
@@ -470,7 +493,8 @@
                             }
                         } else {
                             $contents = [
-                                'msg' => 'Seu usuário não está ativo, contate um administrador ou RH!'
+                                'msg'    => 'Seu usuário não está ativo, contate um administrador ou RH!',
+                                'status' => 401
                             ];
             
                             $response
@@ -479,7 +503,8 @@
                         }
                     } else {
                         $contents = [
-                            'msg' => 'Sua sessão expirou. Por favor, faça login novamente!'
+                            'msg'    => 'Sua sessão expirou. Por favor, faça login novamente!',
+                            'status' => 401
                         ];
         
                         $response
@@ -488,7 +513,8 @@
                     }
                 } else {
                     $contents = [
-                        'msg' => 'Token inválido!'
+                        'msg'    => 'Token inválido!',
+                        'status' => 401
                     ];
     
                     $response
@@ -497,7 +523,8 @@
                 }
             } else {
                 $contents = [
-                    'msg' => 'Seu usuário não está logado. Por favor, faça login!'
+                    'msg'    => 'Seu usuário não está logado. Por favor, faça login!',
+                    'status' => 401
                 ];
 
                 $response
@@ -591,7 +618,8 @@
 
                                             if ( $del ) {
                                                 $contents = [
-                                                    'msg' => 'Cargo deletado com sucesso!'
+                                                    'msg'    => 'Cargo deletado com sucesso!',
+                                                    'status' => 200
                                                 ];
                         
                                                 $response
@@ -599,7 +627,8 @@
                                                     ->send();                                      
                                             } else {
                                                 $contents = [
-                                                    'msg' => 'Não foi possível deletar cargo!'
+                                                    'msg'    => 'Não foi possível deletar cargo!',
+                                                    'status' => 400
                                                 ];
                         
                                                 $response
@@ -608,7 +637,8 @@
                                             }
                                         } else {
                                             $contents = [
-                                                'msg' => 'Não foi possível remover cargo dos usuários!'
+                                                'msg'    => 'Não foi possível remover cargo dos usuários!',
+                                                'status' => 400
                                             ];
                     
                                             $response
@@ -621,7 +651,8 @@
                                         $this->db->rollback();
                 
                                         $contents = [
-                                            'msg' => 'Ocorreu um erro em nosso servidor, tente mais tarde!'
+                                            'msg'    => 'Ocorreu um erro em nosso servidor, tente mais tarde!',
+                                            'status' => 500
                                         ];
                         
                                         $response
@@ -630,7 +661,8 @@
                                     }
                                 } else {
                                     $contents = [
-                                        'msg' => 'Cargo não encontrado!'
+                                        'msg'    => 'Cargo não encontrado!',
+                                        'status' => 400
                                     ];
                     
                                     $response
@@ -639,7 +671,8 @@
                                 }
                             } else {
                                 $contents = [
-                                    'msg' => 'Você não possui autorização para acessar essa página!'
+                                    'msg'    => 'Você não possui autorização para acessar essa página!',
+                                    'status' => 401
                                 ];
                 
                                 $response
@@ -648,7 +681,8 @@
                             }
                         } else {
                             $contents = [
-                                'msg' => 'Seu usuário não está ativo, contate um administrador ou RH!'
+                                'msg'    => 'Seu usuário não está ativo, contate um administrador ou RH!',
+                                'status' => 401
                             ];
             
                             $response
@@ -657,7 +691,8 @@
                         }
                     } else {
                         $contents = [
-                            'msg' => 'Sua sessão expirou. Por favor, faça login novamente!'
+                            'msg'    => 'Sua sessão expirou. Por favor, faça login novamente!',
+                            'status' => 401
                         ];
         
                         $response
@@ -666,7 +701,8 @@
                     }
                 } else {
                     $contents = [
-                        'msg' => 'Token inválido!'
+                        'msg'    => 'Token inválido!',
+                        'status' => 401
                     ];
     
                     $response
@@ -675,7 +711,8 @@
                 }
             } else {
                 $contents = [
-                    'msg' => 'Seu usuário não está logado. Por favor, faça login!'
+                    'msg'    => 'Seu usuário não está logado. Por favor, faça login!',
+                    'status' => 401
                 ];
 
                 $response

@@ -18,7 +18,12 @@
     require_once CONFIG_PATH . 'config.php';
     require_once CONFIG_PATH . 'di.php';
     require_once CONFIG_PATH . 'routes.php';
-    
+
+    header('Access-Control-Allow-Origin: ' . $_ENV['APP_URL']);
+    header("Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE");
+    header("Access-Control-Allow-Headers: Authorization");
+    header('Access-Control-Allow-Credentials: true');
+
     $app->handle(
         $_SERVER["REQUEST_URI"]
     );

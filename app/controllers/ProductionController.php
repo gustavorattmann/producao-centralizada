@@ -220,26 +220,24 @@
                                         }
 
                                         $contents[$key] = [
-                                            'production' => [
-                                                'id'                           => $production['id'],
-                                                'solicitor'                    => $production['solicitor'],
-                                                'designated'                   => $production['designated'],
-                                                'product'                      => $production['product'],
-                                                'category'                     => $production['category'],
-                                                'raw_material'                 => $production['raw_material'],
-                                                'stock'                        => $production['stock'],
-                                                'quantity_product_requested'   => $production['quantity_product_requested'],
-                                                'quantity_product_produced'    => $production['quantity_product_produced'],
-                                                'quantity_product_losted'      => $production['quantity_product_losted'],
-                                                'quantity_raw_material_limit'  => $production['quantity_raw_material_limit'],
-                                                'quantity_raw_material_used'   => $production['quantity_raw_material_used'],
-                                                'quantity_raw_material_losted' => $production['quantity_raw_material_losted'],
-                                                'justification'                => $production['justification'],
-                                                'status'                       => $production['status'],
-                                                'situation'                    => $production['situation'],
-                                                'date_created'                 => $date_created->format('d/m/Y H: i: s'),
-                                                'date_updated'                 => $date_updated
-                                            ]
+                                            'id'                           => $production['id'],
+                                            'solicitor'                    => $production['solicitor'],
+                                            'designated'                   => $production['designated'],
+                                            'product'                      => $production['product'],
+                                            'category'                     => $production['category'],
+                                            'raw_material'                 => $production['raw_material'],
+                                            'stock'                        => $production['stock'],
+                                            'quantity_product_requested'   => $production['quantity_product_requested'],
+                                            'quantity_product_produced'    => $production['quantity_product_produced'],
+                                            'quantity_product_losted'      => $production['quantity_product_losted'],
+                                            'quantity_raw_material_limit'  => $production['quantity_raw_material_limit'],
+                                            'quantity_raw_material_used'   => $production['quantity_raw_material_used'],
+                                            'quantity_raw_material_losted' => $production['quantity_raw_material_losted'],
+                                            'justification'                => $production['justification'],
+                                            'status'                       => $production['status'],
+                                            'situation'                    => $production['situation'],
+                                            'date_created'                 => $date_created->format('d/m/Y H: i: s'),
+                                            'date_updated'                 => $date_updated
                                         ];
                                     }
 
@@ -248,7 +246,8 @@
                                         ->send();
                                 } else {
                                     $contents = [
-                                        'msg' => 'Nenhum produto foi produzido!'
+                                        'msg'    => 'Nenhum produto foi produzido!',
+                                        'status' => 400
                                     ];
                     
                                     $response
@@ -257,7 +256,8 @@
                                 }
                             } else {
                                 $contents = [
-                                    'msg' => 'Você não possui autorização para acessar essa página!'
+                                    'msg'    => 'Você não possui autorização para acessar essa página!',
+                                    'status' => 401
                                 ];
                 
                                 $response
@@ -266,7 +266,8 @@
                             }
                         } else {
                             $contents = [
-                                'msg' => 'Seu usuário não está ativo, contate um administrador ou RH!'
+                                'msg'    => 'Seu usuário não está ativo, contate um administrador ou RH!',
+                                'status' => 401
                             ];
             
                             $response
@@ -275,7 +276,8 @@
                         }
                     } else {
                         $contents = [
-                            'msg' => 'Sua sessão expirou. Por favor, faça login novamente!'
+                            'msg'    => 'Sua sessão expirou. Por favor, faça login novamente!',
+                            'status' => 401
                         ];
         
                         $response
@@ -284,7 +286,8 @@
                     }
                 } else {
                     $contents = [
-                        'msg' => 'Token inválido!'
+                        'msg'    => 'Token inválido!',
+                        'status' => 401
                     ];
     
                     $response
@@ -293,7 +296,8 @@
                 }
             } else {
                 $contents = [
-                    'msg' => 'Seu usuário não está logado. Por favor, faça login!'
+                    'msg'    => 'Seu usuário não está logado. Por favor, faça login!',
+                    'status' => 401
                 ];
 
                 $response
@@ -407,26 +411,24 @@
                                         }
     
                                         $contents = [
-                                            'production' => [
-                                                'id'                           => $result['id'],
-                                                'solicitor'                    => $result['solicitor'],
-                                                'designated'                   => $result['designated'],
-                                                'product'                      => $result['product'],
-                                                'category'                     => $result['category'],
-                                                'raw_material'                 => $result['raw_material'],
-                                                'stock'                        => $result['stock'],
-                                                'quantity_product_requested'   => $result['quantity_product_requested'],
-                                                'quantity_product_produced'    => $result['quantity_product_produced'],
-                                                'quantity_product_losted'      => $result['quantity_product_losted'],
-                                                'quantity_raw_material_limit'  => $result['quantity_raw_material_limit'],
-                                                'quantity_raw_material_used'   => $result['quantity_raw_material_used'],
-                                                'quantity_raw_material_losted' => $result['quantity_raw_material_losted'],
-                                                'justification'                => $result['justification'],
-                                                'status'                       => $result['status'],
-                                                'situation'                    => $result['situation'],
-                                                'date_created'                 => $date_created->format('d/m/Y H: i: s'),
-                                                'date_updated'                 => $date_updated
-                                            ]
+                                            'id'                           => $result['id'],
+                                            'solicitor'                    => $result['solicitor'],
+                                            'designated'                   => $result['designated'],
+                                            'product'                      => $result['product'],
+                                            'category'                     => $result['category'],
+                                            'raw_material'                 => $result['raw_material'],
+                                            'stock'                        => $result['stock'],
+                                            'quantity_product_requested'   => $result['quantity_product_requested'],
+                                            'quantity_product_produced'    => $result['quantity_product_produced'],
+                                            'quantity_product_losted'      => $result['quantity_product_losted'],
+                                            'quantity_raw_material_limit'  => $result['quantity_raw_material_limit'],
+                                            'quantity_raw_material_used'   => $result['quantity_raw_material_used'],
+                                            'quantity_raw_material_losted' => $result['quantity_raw_material_losted'],
+                                            'justification'                => $result['justification'],
+                                            'status'                       => $result['status'],
+                                            'situation'                    => $result['situation'],
+                                            'date_created'                 => $date_created->format('d/m/Y H: i: s'),
+                                            'date_updated'                 => $date_updated
                                         ];
     
                                         $response
@@ -434,7 +436,8 @@
                                             ->send();
                                     } else {
                                         $contents = [
-                                            'msg' => 'Produto solicitado ainda não foi produzido!'
+                                            'msg'    => 'Produto solicitado ainda não foi produzido!',
+                                            'status' => 400
                                         ];
                         
                                         $response
@@ -443,7 +446,8 @@
                                     }
                                 } else {
                                     $contents = [
-                                        'msg' => 'Você não possui autorização para visualizar a produção desse produto!'
+                                        'msg'    => 'Você não possui autorização para visualizar a produção desse produto!',
+                                        'status' => 401
                                     ];
                     
                                     $response
@@ -452,7 +456,8 @@
                                 }
                             } else {
                                 $contents = [
-                                    'msg' => 'Você não possui autorização para acessar essa página!'
+                                    'msg'    => 'Você não possui autorização para acessar essa página!',
+                                    'status' => 401
                                 ];
                 
                                 $response
@@ -461,7 +466,8 @@
                             }
                         } else {
                             $contents = [
-                                'msg' => 'Seu usuário não está ativo, contate um administrador ou RH!'
+                                'msg'    => 'Seu usuário não está ativo, contate um administrador ou RH!',
+                                'status' => 401
                             ];
             
                             $response
@@ -470,7 +476,8 @@
                         }
                     } else {
                         $contents = [
-                            'msg' => 'Sua sessão expirou. Por favor, faça login novamente!'
+                            'msg'    => 'Sua sessão expirou. Por favor, faça login novamente!',
+                            'status' => 401
                         ];
         
                         $response
@@ -479,7 +486,8 @@
                     }
                 } else {
                     $contents = [
-                        'msg' => 'Token inválido!'
+                        'msg'    => 'Token inválido!',
+                        'status' => 401
                     ];
     
                     $response
@@ -488,7 +496,8 @@
                 }
             } else {
                 $contents = [
-                    'msg' => 'Seu usuário não está logado. Por favor, faça login!'
+                    'msg'    => 'Seu usuário não está logado. Por favor, faça login!',
+                    'status' => 401
                 ];
 
                 $response
@@ -552,7 +561,8 @@
                                                 ( !empty($request->get('quantity_raw_material_losted')) || is_numeric($request->get('quantity_raw_material_losted')) ) ) {
                                                 if ( $request->get('quantity_product_produced') < 1 ) {
                                                     $contents = [
-                                                        'msg' => 'Valor informado para quantidade de produto produzido está diferente do permitido!'
+                                                        'msg'    => 'Valor informado para quantidade de produto produzido está diferente do permitido!',
+                                                        'status' => 400
                                                     ];
                                     
                                                     $response
@@ -560,7 +570,8 @@
                                                         ->send();
                                                 } else if ( $request->get('quantity_product_losted') < 1 ) {
                                                     $contents = [
-                                                        'msg' => 'Valor informado para quantidade de produto perdido está diferente do permitido!'
+                                                        'msg'    => 'Valor informado para quantidade de produto perdido está diferente do permitido!',
+                                                        'status' => 400
                                                     ];
                                     
                                                     $response
@@ -568,7 +579,8 @@
                                                         ->send();
                                                 } else if ( $request->get('quantity_raw_material_used') < 1 ) {
                                                     $contents = [
-                                                        'msg' => 'Valor informado para quantidade de matéria-prima utilizada está diferente do permitido!'
+                                                        'msg'    => 'Valor informado para quantidade de matéria-prima utilizada está diferente do permitido!',
+                                                        'status' => 400
                                                     ];
                                     
                                                     $response
@@ -576,7 +588,8 @@
                                                         ->send();
                                                 } else if ( $request->get('quantity_raw_material_losted') < 1 ) {
                                                     $contents = [
-                                                        'msg' => 'Valor informado para quantidade de matéria-prima perdida está diferente do permitido!'
+                                                        'msg'    => 'Valor informado para quantidade de matéria-prima perdida está diferente do permitido!',
+                                                        'status' => 400
                                                     ];
                                     
                                                     $response
@@ -584,7 +597,8 @@
                                                         ->send();
                                                 } else if ( intval($request->get('quantity_product_produced')) > $result_order['quantity_product_requested'] ) {
                                                     $contents = [
-                                                        'msg' => 'Quantidade de produto(s) produzido(s) acima da quantidade solicitada!'
+                                                        'msg'    => 'Quantidade de produto(s) produzido(s) acima da quantidade solicitada!',
+                                                        'status' => 400
                                                     ];
                                     
                                                     $response
@@ -655,7 +669,8 @@
 
                                                             if ( $update_status_order ) {
                                                                 $contents = [
-                                                                    'msg' => 'Cadastro realizado com sucesso!'
+                                                                    'msg'    => 'Cadastro realizado com sucesso!',
+                                                                    'status' => 201
                                                                 ];
                                                 
                                                                 $response
@@ -663,7 +678,8 @@
                                                                     ->send();
                                                             } else {
                                                                 $contents = [
-                                                                    'msg' => 'Falha ao alterar o status do pedido!'
+                                                                    'msg'    => 'Falha ao alterar o status do pedido!',
+                                                                    'status' => 400
                                                                 ];
                                                 
                                                                 $response
@@ -672,7 +688,8 @@
                                                             }
                                                         } else {
                                                             $contents = [
-                                                                'msg' => 'Falha no cadastro!'
+                                                                'msg'    => 'Falha no cadastro!',
+                                                                'status' => 400
                                                             ];
                                             
                                                             $response
@@ -685,7 +702,8 @@
                                                         $this->db->rollback();
             
                                                         $contents = [
-                                                            'msg' => 'Ocorreu um erro em nosso servidor, tente mais tarde!'
+                                                            'msg'    => 'Ocorreu um erro em nosso servidor, tente mais tarde!',
+                                                            'status' => 500
                                                         ];
                                         
                                                         $response
@@ -695,7 +713,8 @@
                                                 }
                                             } else {
                                                 $contents = [
-                                                    'msg' => 'Dados incompletos!'
+                                                    'msg'    => 'Dados incompletos!',
+                                                    'status' => 400
                                                 ];
                                 
                                                 $response
@@ -704,7 +723,8 @@
                                             }
                                         } else {
                                             $contents = [
-                                                'msg' => 'Você não possui autorização para produzir esse produto!'
+                                                'msg'    => 'Você não possui autorização para produzir esse produto!',
+                                                'status' => 401
                                             ];
                             
                                             $response
@@ -713,7 +733,8 @@
                                         }
                                     } else {
                                         $contents = [
-                                            'msg' => 'Pedido não está disponível para produção!'
+                                            'msg'    => 'Pedido não está disponível para produção!',
+                                            'status' => 400
                                         ];
                         
                                         $response
@@ -722,7 +743,8 @@
                                     }
                                 } else {
                                     $contents = [
-                                        'msg' => 'Pedido não encontrado!'
+                                        'msg'    => 'Pedido não encontrado!',
+                                        'status' => 400
                                     ];
                     
                                     $response
@@ -731,7 +753,8 @@
                                 }
                             } else {
                                 $contents = [
-                                    'msg' => 'Você não possui autorização para acessar essa página!'
+                                    'msg'    => 'Você não possui autorização para acessar essa página!',
+                                    'status' => 401
                                 ];
                 
                                 $response
@@ -740,7 +763,8 @@
                             }
                         } else {
                             $contents = [
-                                'msg' => 'Seu usuário não está ativo, contate um administrador ou RH!'
+                                'msg'    => 'Seu usuário não está ativo, contate um administrador ou RH!',
+                                'status' => 401
                             ];
             
                             $response
@@ -749,7 +773,8 @@
                         }
                     } else {
                         $contents = [
-                            'msg' => 'Sua sessão expirou. Por favor, faça login novamente!'
+                            'msg'    => 'Sua sessão expirou. Por favor, faça login novamente!',
+                            'status' => 401
                         ];
         
                         $response
@@ -758,7 +783,8 @@
                     }
                 } else {
                     $contents = [
-                        'msg' => 'Token inválido!'
+                        'msg'    => 'Token inválido!',
+                        'status' => 401
                     ];
     
                     $response
@@ -767,7 +793,8 @@
                 }
             } else {
                 $contents = [
-                    'msg' => 'Seu usuário não está logado. Por favor, faça login!'
+                    'msg'    => 'Seu usuário não está logado. Por favor, faça login!',
+                    'status' => 401
                 ];
 
                 $response
@@ -851,7 +878,8 @@
                                                 ( !empty($request->getPut('situation')) || is_numeric($request->getPut('situation')) ) ) {
                                                 if ( $request->getPut('quantity_product_produced') < 1 ) {
                                                     $contents = [
-                                                        'msg' => 'Valor informado para quantidade de produto produzido está diferente do permitido!'
+                                                        'msg'    => 'Valor informado para quantidade de produto produzido está diferente do permitido!',
+                                                        'status' => 400
                                                     ];
                                     
                                                     $response
@@ -859,7 +887,8 @@
                                                         ->send();
                                                 } else if ( $request->getPut('quantity_product_losted') < 1 ) {
                                                     $contents = [
-                                                        'msg' => 'Valor informado para quantidade de produto perdido está diferente do permitido!'
+                                                        'msg'    => 'Valor informado para quantidade de produto perdido está diferente do permitido!',
+                                                        'status' => 400
                                                     ];
                                     
                                                     $response
@@ -867,7 +896,8 @@
                                                         ->send();
                                                 } else if ( $request->getPut('quantity_raw_material_used') < 1 ) {
                                                     $contents = [
-                                                        'msg' => 'Valor informado para quantidade de matéria-prima utilizada está diferente do permitido!'
+                                                        'msg'    => 'Valor informado para quantidade de matéria-prima utilizada está diferente do permitido!',
+                                                        'status' => 400
                                                     ];
                                     
                                                     $response
@@ -875,7 +905,8 @@
                                                         ->send();
                                                 } else if ( $request->getPut('quantity_raw_material_losted') < 1 ) {
                                                     $contents = [
-                                                        'msg' => 'Valor informado para quantidade de matéria-prima perdida está diferente do permitido!'
+                                                        'msg'    => 'Valor informado para quantidade de matéria-prima perdida está diferente do permitido!',
+                                                        'status' => 400
                                                     ];
                                     
                                                     $response
@@ -883,7 +914,8 @@
                                                         ->send();
                                                 } else if ( intval($request->getPut('quantity_product_produced')) > $result['quantity_product_requested'] ) {
                                                     $contents = [
-                                                        'msg' => 'Quantidade de produto(s) produzido(s) acima da quantidade solicitada!'
+                                                        'msg'    => 'Quantidade de produto(s) produzido(s) acima da quantidade solicitada!',
+                                                        'status' => 400
                                                     ];
                                     
                                                     $response
@@ -891,7 +923,8 @@
                                                         ->send();
                                                 } else if ( $request->getPut('situation') != 0 && $request->getPut('situation') != 1 ) {
                                                     $contents = [
-                                                        'msg' => 'Valor informado para situação está diferente do permitido!'
+                                                        'msg'    => 'Valor informado para situação está diferente do permitido!',
+                                                        'status' => 400
                                                     ];
                                     
                                                     $response
@@ -1001,7 +1034,8 @@
 
                                                                 if ( $update_status_order ) {
                                                                     $contents = [
-                                                                        'msg' => 'Produção de produto alterado com sucesso!'
+                                                                        'msg'    => 'Produção de produto alterado com sucesso!',
+                                                                        'status' => 201
                                                                     ];
                                                     
                                                                     $response
@@ -1009,7 +1043,8 @@
                                                                         ->send();
                                                                 } else {
                                                                     $contents = [
-                                                                        'msg' => 'Falha ao alterar o status do pedido!'
+                                                                        'msg'    => 'Falha ao alterar o status do pedido!',
+                                                                        'status' => 400
                                                                     ];
                                                     
                                                                     $response
@@ -1018,7 +1053,8 @@
                                                                 }
                                                             } else {
                                                                 $contents = [
-                                                                    'msg' => 'Não foi possível alterar produção de produto!'
+                                                                    'msg'    => 'Não foi possível alterar produção de produto!',
+                                                                    'status' => 400
                                                                 ];
                                                 
                                                                 $response
@@ -1031,7 +1067,8 @@
                                                             $this->db->rollback();
 
                                                             $contents = [
-                                                                'msg' => 'Ocorreu um erro em nosso servidor, tente mais tarde!'
+                                                                'msg'    => 'Ocorreu um erro em nosso servidor, tente mais tarde!',
+                                                                'status' => 500
                                                             ];
                                             
                                                             $response
@@ -1040,7 +1077,8 @@
                                                         }
                                                     } else {
                                                         $contents = [
-                                                            'msg' => 'Digite pelo menos um campo com valor diferente do atual!'
+                                                            'msg'    => 'Digite pelo menos um campo com valor diferente do atual!',
+                                                            'status' => 400
                                                         ];
                                         
                                                         $response
@@ -1050,7 +1088,8 @@
                                                 }
                                             } else {
                                                 $contents = [
-                                                    'msg' => 'Dados incompletos!'
+                                                    'msg'    => 'Dados incompletos!',
+                                                    'status' => 400
                                                 ];
                                 
                                                 $response
@@ -1059,7 +1098,8 @@
                                             }
                                         } else {
                                             $contents = [
-                                                'msg' => 'Você não possui autorização para alterar a produção desse produto!'
+                                                'msg'    => 'Você não possui autorização para alterar a produção desse produto!',
+                                                'status' => 401
                                             ];
                             
                                             $response
@@ -1068,7 +1108,8 @@
                                         }
                                     } else {
                                         $contents = [
-                                            'msg' => 'Pedido não está disponível para alteração de produção!'
+                                            'msg'    => 'Pedido não está disponível para alteração de produção!',
+                                            'status' => 400
                                         ];
                         
                                         $response
@@ -1077,7 +1118,8 @@
                                     }
                                 } else {
                                     $contents = [
-                                        'msg' => 'Produção de produto não encontrada!'
+                                        'msg'    => 'Produção de produto não encontrada!',
+                                        'status' => 400
                                     ];
                     
                                     $response
@@ -1086,7 +1128,8 @@
                                 }
                             } else {
                                 $contents = [
-                                    'msg' => 'Você não possui autorização para acessar essa página!'
+                                    'msg'    => 'Você não possui autorização para acessar essa página!',
+                                    'status' => 401
                                 ];
                 
                                 $response
@@ -1095,7 +1138,8 @@
                             }
                         } else {
                             $contents = [
-                                'msg' => 'Seu usuário não está ativo, contate um administrador ou RH!'
+                                'msg'    => 'Seu usuário não está ativo, contate um administrador ou RH!',
+                                'status' => 401
                             ];
             
                             $response
@@ -1104,7 +1148,8 @@
                         }
                     } else {
                         $contents = [
-                            'msg' => 'Sua sessão expirou. Por favor, faça login novamente!'
+                            'msg'    => 'Sua sessão expirou. Por favor, faça login novamente!',
+                            'status' => 401
                         ];
         
                         $response
@@ -1113,7 +1158,8 @@
                     }
                 } else {
                     $contents = [
-                        'msg' => 'Token inválido!'
+                        'msg'    => 'Token inválido!',
+                        'status' => 401
                     ];
     
                     $response
@@ -1122,7 +1168,8 @@
                 }
             } else {
                 $contents = [
-                    'msg' => 'Seu usuário não está logado. Por favor, faça login!'
+                    'msg'    => 'Seu usuário não está logado. Por favor, faça login!',
+                    'status' => 401
                 ];
 
                 $response
@@ -1198,7 +1245,8 @@
 
                                         if ( $del ) {
                                             $contents = [
-                                                'msg' => 'Produção de produto deletada com sucesso!'
+                                                'msg'    => 'Produção de produto deletada com sucesso!',
+                                                'status' => 200
                                             ];
                     
                                             $response
@@ -1206,7 +1254,8 @@
                                                 ->send();
                                         } else {
                                             $contents = [
-                                                'msg' => 'Não foi possível deletar produção de produto!'
+                                                'msg'    => 'Não foi possível deletar produção de produto!',
+                                                'status' => 400
                                             ];
                     
                                             $response
@@ -1219,7 +1268,8 @@
                                         $this->db->rollback();
                 
                                         $contents = [
-                                            'msg' => 'Ocorreu um erro em nosso servidor, tente mais tarde!'
+                                            'msg'    => 'Ocorreu um erro em nosso servidor, tente mais tarde!',
+                                            'status' => 500
                                         ];
                         
                                         $response
@@ -1228,7 +1278,8 @@
                                     }
                                 } else {
                                     $contents = [
-                                        'msg' => 'Produção de produto não encontrada!'
+                                        'msg'    => 'Produção de produto não encontrada!',
+                                        'status' => 400
                                     ];
                     
                                     $response
@@ -1237,7 +1288,8 @@
                                 }
                             } else {
                                 $contents = [
-                                    'msg' => 'Você não possui autorização para acessar essa página!'
+                                    'msg'    => 'Você não possui autorização para acessar essa página!',
+                                    'status' => 401
                                 ];
                 
                                 $response
@@ -1246,7 +1298,8 @@
                             }
                         } else {
                             $contents = [
-                                'msg' => 'Seu usuário não está ativo, contate um administrador ou RH!'
+                                'msg'    => 'Seu usuário não está ativo, contate um administrador ou RH!',
+                                'status' => 401
                             ];
             
                             $response
@@ -1255,7 +1308,8 @@
                         }
                     } else {
                         $contents = [
-                            'msg' => 'Sua sessão expirou. Por favor, faça login novamente!'
+                            'msg'    => 'Sua sessão expirou. Por favor, faça login novamente!',
+                            'status' => 401
                         ];
         
                         $response
@@ -1264,7 +1318,8 @@
                     }
                 } else {
                     $contents = [
-                        'msg' => 'Token inválido!'
+                        'msg'    => 'Token inválido!',
+                        'status' => 401
                     ];
     
                     $response
@@ -1273,7 +1328,8 @@
                 }
             } else {
                 $contents = [
-                    'msg' => 'Seu usuário não está logado. Por favor, faça login!'
+                    'msg'    => 'Seu usuário não está logado. Por favor, faça login!',
+                    'status' => 401
                 ];
 
                 $response
